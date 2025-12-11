@@ -9,7 +9,7 @@
     
     <style>
         :root {
-            --primary: #ff4500; /* Reddit Orange */
+            --primary: #ff4500;
             --primary-hover: #ff571a;
             --bg-dark: #0f0f0f;
             --glass-bg: rgba(255, 255, 255, 0.05);
@@ -18,16 +18,11 @@
             --text-muted: #a0a0a0;
         }
 
-        * {
-            box-sizing: border-box;
-            margin: 0;
-            padding: 0;
-        }
+        * { box-sizing: border-box; margin: 0; padding: 0; }
 
         body {
             font-family: 'Poppins', sans-serif;
             background-color: var(--bg-dark);
-            /* Subtle radial gradient for depth */
             background-image: radial-gradient(circle at 50% 30%, #1a1a1a 0%, #050505 100%);
             color: var(--text-main);
             height: 100vh;
@@ -38,7 +33,6 @@
             overflow: hidden;
         }
 
-        /* Background decoration circles */
         .glow-effect {
             position: absolute;
             width: 600px;
@@ -51,7 +45,6 @@
             pointer-events: none;
         }
 
-        /* Main Container */
         .hero-container {
             text-align: center;
             width: 90%;
@@ -60,10 +53,7 @@
             padding: 40px;
         }
 
-        /* Logo / Title Area */
-        .brand {
-            margin-bottom: 40px;
-        }
+        .brand { margin-bottom: 30px; }
 
         .brand i {
             font-size: 3.5rem;
@@ -89,7 +79,6 @@
             font-weight: 300;
         }
 
-        /* Search Bar Wrapper */
         .search-wrapper {
             position: relative;
             width: 100%;
@@ -129,9 +118,7 @@
             font-family: 'Poppins', sans-serif;
         }
 
-        input::placeholder {
-            color: rgba(255, 255, 255, 0.3);
-        }
+        input::placeholder { color: rgba(255, 255, 255, 0.3); }
 
         button {
             background: linear-gradient(135deg, var(--primary), #ff7043);
@@ -151,11 +138,37 @@
             box-shadow: 0 0 15px rgba(255, 69, 0, 0.4);
         }
 
-        button:active {
-            transform: scale(0.95);
+        /* --- NEW: Quick Links Section --- */
+        .quick-links {
+            margin-top: 25px;
+            display: flex;
+            justify-content: center;
+            gap: 15px;
         }
 
-        /* Footer Navigation */
+        .quick-btn {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            color: #ccc;
+            padding: 10px 20px;
+            border-radius: 30px;
+            text-decoration: none;
+            font-size: 0.9rem;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            transition: 0.2s;
+        }
+
+        .quick-btn:hover {
+            background: rgba(255, 255, 255, 0.1);
+            border-color: var(--primary);
+            color: #fff;
+            transform: translateY(-2px);
+        }
+        
+        .quick-btn i { color: var(--primary); }
+
         .footer-nav {
             margin-top: 60px;
             display: flex;
@@ -173,37 +186,31 @@
             position: relative;
         }
 
-        .footer-nav a:hover {
-            color: #fff;
-        }
+        .footer-nav a:hover { color: #fff; }
+        .footer-nav a:hover::after { width: 100%; }
 
         .footer-nav a::after {
-            content: '';
-            position: absolute;
-            width: 0;
-            height: 1px;
-            bottom: -4px;
-            left: 50%;
-            background: var(--primary);
-            transition: all 0.3s;
-            transform: translateX(-50%);
+            content: ''; position: absolute; width: 0; height: 1px;
+            bottom: -4px; left: 50%; background: var(--primary);
+            transition: all 0.3s; transform: translateX(-50%);
         }
 
-        .footer-nav a:hover::after {
-            width: 100%;
-        }
-
-        /* Animations */
         @keyframes fadeIn {
             from { opacity: 0; transform: translateY(20px); }
             to { opacity: 1; transform: translateY(0); }
         }
+        
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-5px); }
+            75% { transform: translateX(5px); }
+        }
 
-        /* Mobile tweaks */
         @media (max-width: 600px) {
             .brand h1 { font-size: 2rem; }
             button { padding: 14px 24px; }
             .hero-container { padding: 20px; }
+            .quick-links { flex-wrap: wrap; }
         }
     </style>
 </head>
@@ -224,6 +231,18 @@
             <button onclick="searchReddit()">Search</button>
         </div>
 
+        <div class="quick-links">
+    <a href="search-results.html?mode=trending" class="quick-btn">
+        <i class="fas fa-fire"></i> Trending
+    </a>
+    <a href="search-results.html?tab=images" class="quick-btn">
+        <i class="fas fa-image"></i> Images
+    </a>
+    <a href="search-results.html?tab=videos" class="quick-btn">
+        <i class="fas fa-play-circle"></i> Videos
+    </a>
+</div>
+
         <div class="footer-nav">
             <a href="#">About</a>
             <a href="#">API</a>
@@ -233,7 +252,6 @@
     </div>
 
     <script>
-        // Function to trigger search on Enter key press
         document.getElementById('query').addEventListener('keydown', function(event) {
             if (event.key === 'Enter') {
                 searchReddit();
@@ -243,30 +261,18 @@
         function searchReddit() {
             const query = document.getElementById('query').value;
             if(query) {
-                // Add a small delay for visual feedback if desired, or go straight
                 const btn = document.querySelector('button');
                 btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
-                
                 setTimeout(() => {
                     window.location.href = `search-results.html?query=${encodeURIComponent(query)}`;
                 }, 100);
             } else {
-                // Shake animation for empty input
                 const wrapper = document.querySelector('.search-wrapper');
                 wrapper.style.animation = 'shake 0.4s ease';
                 setTimeout(() => wrapper.style.animation = '', 400);
             }
         }
     </script>
-    
-    <style>
-        /* Add shake animation for error handling */
-        @keyframes shake {
-            0%, 100% { transform: translateX(0); }
-            25% { transform: translateX(-5px); }
-            75% { transform: translateX(5px); }
-        }
-    </style>
 
 </body>
 </html>
