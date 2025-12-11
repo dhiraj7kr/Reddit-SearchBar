@@ -1,365 +1,219 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>Search Results - Reddit</title>
   <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500&display=swap" rel="stylesheet">
   <style>
-    :root {
-      --accent: #ff4500;
-      --bg: #111;
-      --card: #1a1a1a;
-      --muted: #888;
-      --text: #fff;
+    :root{
+      --accent:#ff4500;
+      --bg:#111;
+      --card:#1a1a1a;
+      --muted:#888;
+      --text:#fff;
     }
     *{box-sizing:border-box}
-    body {
-      font-family: 'Roboto', sans-serif;
-      background-color: var(--bg);
-      color: var(--text);
-      margin: 0;
-      padding: 24px;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      min-height: 100vh;
+    body{
+      font-family:'Roboto',sans-serif;
+      background:var(--bg);
+      color:var(--text);
+      margin:0;padding:20px;display:flex;flex-direction:column;align-items:center;min-height:100vh;
     }
 
-    h1 {
-      font-size: 1.8rem;
-      color: var(--accent);
-      margin: 0 0 18px 0;
-      text-align: center;
-    }
+    .container{width:100%;max-width:1000px}
 
-    .top-row {
-      width: 100%;
-      max-width: 1000px;
-      display: flex;
-      gap: 12px;
-      align-items: center;
-      margin-bottom: 14px;
-    }
+    h1{font-size:1.6rem;color:var(--accent);margin:0 0 14px;text-align:center}
 
-    #search-container {
-      display: flex;
-      align-items: center;
-      flex: 1;
-      gap: 10px;
-    }
+    .top-row{display:flex;gap:10px;align-items:center;margin-bottom:14px}
+    #search-container{display:flex;gap:10px;flex:1;align-items:center}
+    #query{flex:1;padding:8px 12px;border-radius:24px;border:1px solid #333;background:#fff;color:#222}
+    .btn{background:var(--accent);color:#fff;padding:8px 12px;border-radius:20px;border:none;cursor:pointer}
+    .tabs{display:flex;gap:8px}
+    .tab{padding:8px 12px;border-radius:18px;background:#222;color:#ccc;cursor:pointer;border:1px solid transparent}
+    .tab.active{background:linear-gradient(90deg, rgba(255,69,0,0.12), rgba(255,69,0,0.05));color:var(--accent);border-color:rgba(255,69,0,0.18)}
 
-    .home-button {
-      font-size: 15px;
-      background-color: var(--accent);
-      padding: 10px 18px;
-      border: none;
-      border-radius: 28px;
-      color: white;
-      cursor: pointer;
-    }
+    .content{background:transparent;width:100%}
+    .results-list{margin-top:8px;display:block}
+    .result{background:var(--card);padding:14px;border-radius:10px;margin-bottom:12px;display:flex;gap:12px;align-items:flex-start}
+    .result-body{flex:1}
+    .result h3{margin:0 0 8px;font-size:1.08rem;color:var(--accent)}
+    .result p{margin:0 0 8px;color:#d0d0d0;line-height:1.45}
+    .metadata{font-size:0.85rem;color:var(--muted)}
+    .thumbnail img{width:220px;height:140px;object-fit:cover;border-radius:6px}
 
-    #query {
-      width: 100%;
-      padding: 10px 14px;
-      border-radius: 28px;
-      font-size: 15px;
-      border: 1px solid #333;
-      background: #fff;
-      color: #222;
-    }
+    /* images grid */
+    #images-container{display:none;margin-top:8px}
+    .images-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:12px}
+    .image-card{background:#0f0f0f;border-radius:10px;overflow:hidden;height:160px;position:relative;display:flex;align-items:center;justify-content:center;cursor:pointer}
+    .image-card img{width:100%;height:100%;object-fit:cover}
+    .image-caption{position:absolute;bottom:6px;left:6px;right:6px;color:#fff;font-size:0.85rem;background:linear-gradient(0deg, rgba(0,0,0,0.6), transparent);padding:6px;border-radius:6px;display:flex;gap:8px;align-items:center}
 
-    #search-btn {
-      padding: 10px 16px;
-      background-color: var(--accent);
-      border: none;
-      border-radius: 28px;
-      cursor: pointer;
-      color: white;
-      display:flex; align-items:center; gap:8px;
-    }
+    .pagination{display:flex;gap:8px;align-items:center;justify-content:center;margin-top:16px}
+    .page-btn{padding:8px 12px;border-radius:8px;border:1px solid #222;background:#222;color:#ccc;cursor:pointer}
+    .page-btn[disabled]{opacity:0.45;cursor:not-allowed}
+    .page-info{color:var(--muted);font-size:0.95rem}
 
-    .tabs {
-      display: flex;
-      gap: 8px;
-      margin-left: 6px;
-    }
+    .loader{display:flex;align-items:center;gap:8px;color:var(--muted)}
+    .no-results{padding:18px;background:#161616;border-radius:8px;color:#ccc;margin-top:12px;text-align:center}
 
-    .tab {
-      padding: 8px 14px;
-      border-radius: 20px;
-      background: #222;
-      color: #ccc;
-      cursor: pointer;
-      font-size: 14px;
-      border: 1px solid transparent;
-    }
+    /* modal */
+    .modal{position:fixed;inset:0;display:none;align-items:center;justify-content:center;background:rgba(0,0,0,0.75);z-index:9999}
+    .modal.active{display:flex}
+    .modal img{max-width:92%;max-height:86%;border-radius:8px}
+    .close-btn{position:absolute;top:18px;right:22px;background:rgba(0,0,0,0.45);color:#fff;border:1px solid rgba(255,255,255,0.08);padding:8px 10px;border-radius:6px;cursor:pointer}
 
-    .tab.active {
-      background: linear-gradient(90deg, rgba(255,69,0,0.12), rgba(255,69,0,0.05));
-      color: var(--accent);
-      border-color: rgba(255,69,0,0.2);
-      box-shadow: 0 4px 14px rgba(0,0,0,0.5);
-    }
-
-    .content-wrap {
-      width: 100%;
-      max-width: 1000px;
-    }
-
-    .search-results {
-      margin-top: 8px;
-      display: block;
-    }
-
-    .result {
-      background-color: var(--card);
-      padding: 18px;
-      margin-bottom: 16px;
-      border-radius: 10px;
-      box-shadow: 0 2px 10px rgba(0,0,0,0.2);
-      display: flex;
-      gap: 14px;
-      align-items: flex-start;
-    }
-
-    .result-body {
-      flex: 1 1 auto;
-    }
-
-    .result h3 {
-      font-size: 1.15rem;
-      color: var(--accent);
-      margin: 0 0 8px 0;
-    }
-
-    .result p {
-      font-size: 0.98rem;
-      color: #d0d0d0;
-      margin: 0 0 8px 0;
-      line-height: 1.45;
-    }
-
-    .metadata {
-      font-size: 0.86rem;
-      color: var(--muted);
-    }
-
-    .result a {
-      color: var(--accent);
-      text-decoration: none;
-      font-size: 0.95rem;
-      display: inline-block;
-      margin-top: 8px;
-    }
-
-    #images-container {
-      display: none;
-      margin-top: 8px;
-    }
-
-    .images-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
-      gap: 12px;
-    }
-
-    .image-card {
-      background: #0f0f0f;
-      border-radius: 10px;
-      overflow: hidden;
-      height: 160px;
-      position: relative;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      cursor: pointer;
-      transition: transform .18s ease, box-shadow .18s ease;
-    }
-
-    .image-card img {
-      width: 100%;
-      height: 100%;
-      object-fit: cover;
-      display:block;
-      transform-origin: center;
-      transition: transform .25s ease;
-    }
-
-    .image-card:hover {
-      transform: translateY(-6px);
-      box-shadow: 0 10px 30px rgba(0,0,0,0.6);
-    }
-
-    .image-caption {
-      position: absolute;
-      bottom: 8px;
-      left: 8px;
-      right: 8px;
-      color: #fff;
-      font-size: 0.85rem;
-      background: linear-gradient(0deg, rgba(0,0,0,0.6), transparent);
-      padding: 8px 10px;
-      border-radius: 6px;
-      display:flex; gap:8px; align-items:center;
-    }
-
-    .modal {
-      position: fixed;
-      inset: 0;
-      display: none;
-      align-items: center;
-      justify-content: center;
-      background: rgba(0,0,0,0.75);
-      z-index: 9999;
-    }
-
-    .modal.active { display:flex; }
-
-    .modal img {
-      max-width: 92%;
-      max-height: 86%;
-      border-radius: 8px;
-      box-shadow: 0 6px 30px rgba(0,0,0,0.6);
-    }
-
-    .modal .close-btn {
-      position: absolute;
-      top: 20px;
-      right: 24px;
-      background: rgba(0,0,0,0.45);
-      color: #fff;
-      border: 1px solid rgba(255,255,255,0.08);
-      padding: 8px 10px;
-      border-radius: 6px;
-      cursor: pointer;
-      font-size: 14px;
-    }
-
-    .navigation {
-      display:flex;
-      gap: 12px;
-      margin-top: 22px;
-      color: #ccc;
-      font-size: 14px;
-    }
-
-    .navigation a { color: #ccc; text-decoration: none; }
-    .navigation a:hover { text-decoration: underline; }
-
-    @media (max-width: 640px) {
-      #query { font-size: 14px; }
-      .image-card { height: 140px; }
-      .top-row { flex-direction: column; align-items: stretch; gap: 12px; }
-      .tabs { margin-left: 0; justify-content: center; }
-      .result { flex-direction: column; align-items: stretch; }
-    }
+    @media(max-width:680px){ .thumbnail img{width:140px;height:98px} .result{flex-direction:column} }
   </style>
 </head>
 <body>
+  <div class="container">
+    <h1>Search Results for: <span id="query-text"></span></h1>
 
-  <h1>Search Results for: <span id="query-text"></span></h1>
+    <div class="top-row">
+      <div id="search-container">
+        <input id="query" type="text" placeholder="Search Reddit..." onkeydown="if(event.key==='Enter') goSearch()" />
+        <button id="search-btn" class="btn" onclick="goSearch()">Search</button>
+      </div>
 
-  <div class="top-row">
-    <div id="search-container">
-      <button class="home-button" onclick="goHome()">Home</button>
-      <input type="text" id="query" placeholder="Search Reddit..." onkeydown="checkEnter(event)" />
-      <button id="search-btn" onclick="searchReddit()">
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden>
-          <path d="M21 21l-4.35-4.35" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-          <circle cx="11" cy="11" r="6" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-        </svg>
-        <span>Search</span>
-      </button>
+      <div class="tabs" role="tablist" aria-label="Results tabs">
+        <div class="tab active" id="tab-all" onclick="switchTab('all')">All</div>
+        <div class="tab" id="tab-images" onclick="switchTab('images')">Images</div>
+      </div>
     </div>
 
-    <div class="tabs" role="tablist" aria-label="Results Tabs">
-      <div class="tab active" id="tab-all" role="tab" aria-selected="true" onclick="switchTab('all')">All</div>
-      <div class="tab" id="tab-images" role="tab" aria-selected="false" onclick="switchTab('images')">Images</div>
+    <div class="content">
+      <div id="loader" class="loader" style="display:none">Loading…</div>
+
+      <!-- Text results -->
+      <div id="results-section">
+        <div id="results-container" class="results-list"></div>
+        <div id="no-results" class="no-results" style="display:none">No relevant posts found on Reddit.</div>
+      </div>
+
+      <!-- Image grid -->
+      <div id="images-container">
+        <div id="images-grid" class="images-grid"></div>
+      </div>
+
+      <!-- Pagination controls -->
+      <div class="pagination" id="pagination" style="display:none">
+        <button id="prev-btn" class="page-btn" onclick="goToPage(currentPage - 1)">Previous</button>
+        <div class="page-info">
+          Page <strong id="page-num">1</strong> of <strong id="page-total">1</strong>
+        </div>
+        <button id="next-btn" class="page-btn" onclick="goToPage(currentPage + 1)">Next</button>
+
+        <div style="display:flex;align-items:center;gap:8px;margin-left:18px">
+          <input id="jump-to" type="number" min="1" style="width:72px;padding:6px;border-radius:6px;border:1px solid #222;background:#111;color:#fff" placeholder="Page" />
+          <button class="page-btn" onclick="jumpTo()">Go</button>
+        </div>
+      </div>
+    </div>
+
+    <div style="height:28px"></div>
+
+    <div class="navigation" style="display:flex;gap:12px;color:#ccc;font-size:14px">
+      <a href="index.html" style="color:#ccc;text-decoration:none">Back to Home</a>
+      <a href="#" style="color:#ccc;text-decoration:none">Contact</a>
     </div>
   </div>
 
-  <div class="content-wrap">
-    <div class="search-results" id="results-container"></div>
-
-    <div id="images-container">
-      <div class="images-grid" id="images-grid"></div>
-    </div>
-
-    <div id="no-results" class="result" style="display:none; margin-top:12px;"></div>
-  </div>
-
-  <div class="navigation">
-    <a href="index.html">Back to Home</a>
-    <a href="#">Contact</a>
-  </div>
-
+  <!-- modal -->
   <div class="modal" id="image-modal" role="dialog" aria-modal="true" aria-hidden="true">
-    <button class="close-btn" aria-label="Close" onclick="closeModal()">Close ✕</button>
+    <button class="close-btn" onclick="closeModal()">Close ✕</button>
     <img id="modal-img" src="" alt="Large view">
   </div>
 
   <script>
-    // Get query parameter from URL
-    const queryParams = new URLSearchParams(window.location.search);
-    const initialQuery = queryParams.get('query') || '';
-    document.getElementById('query-text').textContent = initialQuery;
-    document.getElementById('query').value = initialQuery;
+    /* ---------- Config ---------- */
+    const BACKEND_BASE = 'http://127.0.0.1:5000'; // change if your backend runs elsewhere
+    const PAGE_SIZE = 10; // must match server-side page_size
 
+    /* ---------- Read initial query & page from URL ---------- */
+    const urlParams = new URLSearchParams(window.location.search);
+    let initialQuery = urlParams.get('query') || '';
+    let currentPage = parseInt(urlParams.get('page') || '1', 10) || 1;
+
+    // UI elements
+    const qText = document.getElementById('query-text');
+    const qInput = document.getElementById('query');
+    const resultsContainer = document.getElementById('results-container');
+    const imagesGrid = document.getElementById('images-grid');
+    const imagesContainer = document.getElementById('images-container');
+    const noResults = document.getElementById('no-results');
+    const loader = document.getElementById('loader');
+    const pagination = document.getElementById('pagination');
+    const pageNumEl = document.getElementById('page-num');
+    const pageTotalEl = document.getElementById('page-total');
+    const prevBtn = document.getElementById('prev-btn');
+    const nextBtn = document.getElementById('next-btn');
+
+    // initialize UI
+    qText.textContent = initialQuery;
+    qInput.value = initialQuery;
+
+    // Tab handling
     function switchTab(tab) {
       const allTab = document.getElementById('tab-all');
       const imgTab = document.getElementById('tab-images');
-      const results = document.getElementById('results-container');
-      const images = document.getElementById('images-container');
-
       if (tab === 'images') {
         imgTab.classList.add('active');
-        imgTab.setAttribute('aria-selected', 'true');
         allTab.classList.remove('active');
-        allTab.setAttribute('aria-selected', 'false');
-        results.style.display = 'none';
-        images.style.display = 'block';
+        document.getElementById('results-section').style.display = 'none';
+        imagesContainer.style.display = 'block';
       } else {
         allTab.classList.add('active');
-        allTab.setAttribute('aria-selected', 'true');
         imgTab.classList.remove('active');
-        imgTab.setAttribute('aria-selected', 'false');
-        results.style.display = 'block';
-        images.style.display = 'none';
+        document.getElementById('results-section').style.display = 'block';
+        imagesContainer.style.display = 'none';
       }
     }
 
-    function goHome() {
-      window.location.href = "index.html";
+    // Navigation helpers
+    function updateUrl(query, page) {
+      const u = new URL(window.location.href);
+      if (query) u.searchParams.set('query', query);
+      else u.searchParams.delete('query');
+      u.searchParams.set('page', String(page || 1));
+      window.history.replaceState({}, '', u.toString());
     }
 
-    function searchReddit() {
-      const q = document.getElementById('query').value.trim();
-      if (q) {
-        window.location.href = `search-results.html?query=${encodeURIComponent(q)}`;
-      }
+    function goSearch() {
+      const q = qInput.value.trim();
+      if (!q) return;
+      initialQuery = q;
+      currentPage = 1;
+      updateUrl(initialQuery, currentPage);
+      loadPage(currentPage);
     }
 
-    function checkEnter(e) {
-      if (e.key === 'Enter') searchReddit();
+    function goToPage(page) {
+      if (page < 1) return;
+      if (page === currentPage) return;
+      currentPage = page;
+      updateUrl(initialQuery, currentPage);
+      loadPage(currentPage);
+      window.scrollTo({ top: 0, behavior: 'smooth' });
     }
 
-    // sanitize reddit image urls
+    function jumpTo() {
+      const v = parseInt(document.getElementById('jump-to').value || '0', 10);
+      if (!v || v < 1) return;
+      goToPage(v);
+    }
+
+    /* ---------- Utilities ---------- */
     function sanitizeImageUrl(url) {
       if (!url) return url;
-      // reddit sometimes returns URLs with &amp; or without protocol (//)
       let u = String(url).trim();
-      u = u.replace(/&amp;/g, '&'); // decode ampersands
-      // if it's a preview url that contains escape sequences, try decodeURI
+      u = u.replace(/&amp;/g, '&');
       try { u = decodeURI(u); } catch(e) {}
-      // if protocol-less, make it https
       if (u.startsWith('//')) u = 'https:' + u;
-      // some reddit preview urls are like "preview.redd.it/..." but without protocol
       if (u.startsWith('preview.redd.it') || u.startsWith('i.redd.it') || u.startsWith('i.reddituploads.com')) u = 'https://' + u;
       return u;
     }
 
-    // helper to prevent XSS in inserted text (not for URLs)
     function escapeHtml(str) {
       if (!str) return '';
       return String(str)
@@ -370,173 +224,186 @@
         .replace(/'/g, '&#039;');
     }
 
-    function populateResults(data) {
-      const resultsContainer = document.getElementById('results-container');
-      const imagesGrid = document.getElementById('images-grid');
-      const noResultsDiv = document.getElementById('no-results');
+    /* ---------- Render ---------- */
+    function setLoading(on) {
+      loader.style.display = on ? 'flex' : 'none';
+    }
 
+    function renderPage(response) {
+      // Response fields: page, page_size, total_results, total_pages, results[]
+      const data = response;
+      const results = data.results || [];
+      const totalPages = data.total_pages || 1;
+      const totalResults = data.total_results || 0;
+      // update pagination UI
+      pageNumEl.textContent = data.page || '1';
+      pageTotalEl.textContent = totalPages;
+      pagination.style.display = totalPages > 0 ? 'flex' : 'none';
+      prevBtn.disabled = !data.has_prev;
+      nextBtn.disabled = !data.has_next;
+
+      // populate text results
       resultsContainer.innerHTML = '';
       imagesGrid.innerHTML = '';
-      noResultsDiv.style.display = 'none';
+      noResults.style.display = 'none';
 
-      if (data.results && data.results.length > 0) {
-        data.results.forEach(result => {
-          // === Text result card ===
-          const r = document.createElement('div');
-          r.className = 'result';
+      if (!results.length) {
+        noResults.style.display = 'block';
+        imagesGrid.innerHTML = `<div style="color:#ccc;padding:18px;background:#0f0f0f;border-radius:8px;">No images found for this query.</div>`;
+        return;
+      }
 
-          const leftWrap = document.createElement('div');
-          leftWrap.className = 'result-thumbnail';
-          leftWrap.style.width = '240px';
-          leftWrap.style.flex = '0 0 240px';
+      results.forEach(r => {
+        // build result card
+        const card = document.createElement('div');
+        card.className = 'result';
 
-          const body = document.createElement('div');
-          body.className = 'result-body';
-
-          const title = document.createElement('h3');
-          const titleLink = document.createElement('a');
-          titleLink.href = result.url || '#';
-          titleLink.target = '_blank';
-          titleLink.rel = 'noopener noreferrer';
-          titleLink.innerHTML = escapeHtml(result.title || 'Untitled');
-          title.appendChild(titleLink);
-
-          const descriptionPreview = (result.description || '').split(' ').slice(0, 60).join(' ');
-          const descEl = document.createElement('p');
-          descEl.className = 'description-preview';
-          descEl.dataset.full = result.description || '';
-          descEl.dataset.preview = descriptionPreview;
-          descEl.textContent = descriptionPreview + ((result.description || '').split(' ').length > 60 ? '...' : '');
-
-          const meta = document.createElement('div');
-          meta.className = 'metadata';
-          meta.innerHTML = `By ${escapeHtml(result.author || 'unknown')} • Posted on ${escapeHtml(result.created_at || 'N/A')}`;
-
-          const moreLink = document.createElement('a');
-          moreLink.href = result.url || '#';
-          moreLink.target = '_blank';
-          moreLink.rel = 'noopener noreferrer';
-          moreLink.textContent = 'Read More on Reddit';
-
-          const seeMoreBtn = document.createElement('div');
-          seeMoreBtn.className = 'see-more';
-          seeMoreBtn.style.color = 'var(--accent)';
-          seeMoreBtn.style.cursor = 'pointer';
-          seeMoreBtn.style.marginTop = '10px';
-          seeMoreBtn.textContent = 'See More';
-          seeMoreBtn.onclick = () => toggleDescription(seeMoreBtn);
-
-          body.appendChild(title);
-          body.appendChild(descEl);
-          body.appendChild(meta);
-          body.appendChild(moreLink);
-          body.appendChild(seeMoreBtn);
-
-          // === Optional image thumbnail (create DOM element to avoid HTML-escaping issues) ===
-          if (result.image_url) {
-            const sanitized = sanitizeImageUrl(result.image_url);
-            const thumbWrap = document.createElement('div');
-            thumbWrap.style.display = 'flex';
-            thumbWrap.style.alignItems = 'center';
-            thumbWrap.style.justifyContent = 'center';
-            thumbWrap.style.marginLeft = '12px';
-            thumbWrap.style.flex = '0 0 240px';
-
-            const img = document.createElement('img');
-            img.alt = result.title || 'post image';
-            img.style.maxWidth = '240px';
-            img.style.maxHeight = '140px';
-            img.style.borderRadius = '6px';
-            img.style.objectFit = 'cover';
-            img.src = sanitized;
-            img.loading = 'lazy';
-            // safety: fallback if image fails to load
-            img.onerror = () => { img.style.display = 'none'; };
-
-            thumbWrap.appendChild(img);
-            r.appendChild(thumbWrap);
-          }
-
-          r.appendChild(body);
-          resultsContainer.appendChild(r);
-
-          // === Images grid card (for the Images tab) ===
-          if (result.image_url) {
-            const imgCard = document.createElement('div');
-            imgCard.className = 'image-card';
-            imgCard.tabIndex = 0;
-            imgCard.setAttribute('role','button');
-            imgCard.setAttribute('aria-pressed','false');
-
-            const imgEl = document.createElement('img');
-            imgEl.alt = result.title || 'Image';
-            imgEl.src = sanitizeImageUrl(result.image_url);
-            imgEl.loading = 'lazy';
-            imgEl.onerror = () => { imgEl.style.display = 'none'; };
-
-            imgCard.appendChild(imgEl);
-
-            const cap = document.createElement('div');
-            cap.className = 'image-caption';
-            const strong = document.createElement('strong');
-            strong.style.flex = '1';
-            strong.style.whiteSpace = 'nowrap';
-            strong.style.overflow = 'hidden';
-            strong.style.textOverflow = 'ellipsis';
-            strong.textContent = result.title || '';
-            cap.appendChild(strong);
-
-            imgCard.appendChild(cap);
-
-            imgCard.onclick = () => openModal(imgEl.src, result.title);
-            imgCard.onkeypress = (e) => { if (e.key === 'Enter') openModal(imgEl.src, result.title); };
-
-            imagesGrid.appendChild(imgCard);
-          }
-        });
-
-        // Show image fallback if no images found
-        if (imagesGrid.children.length === 0) {
-          imagesGrid.innerHTML = `<div style="color:#ccc;padding:18px;background:#0f0f0f;border-radius:8px;">No images found for this query.</div>`;
+        // optional thumbnail area
+        if (r.image_url) {
+          const thumbWrap = document.createElement('div');
+          thumbWrap.className = 'thumbnail';
+          const img = document.createElement('img');
+          img.src = sanitizeImageUrl(r.image_url);
+          img.alt = r.title || 'post image';
+          img.loading = 'lazy';
+          img.onerror = () => { img.style.display = 'none'; };
+          thumbWrap.appendChild(img);
+          card.appendChild(thumbWrap);
         }
 
-      } else {
-        noResultsDiv.style.display = 'block';
-        noResultsDiv.textContent = "No relevant posts found on Reddit.";
-        document.getElementById('results-container').innerHTML = '';
-        document.getElementById('images-grid').innerHTML = `<div style="color:#ccc;padding:18px;background:#0f0f0f;border-radius:8px;">No images found for this query.</div>`;
+        const body = document.createElement('div');
+        body.className = 'result-body';
+
+        const h3 = document.createElement('h3');
+        const a = document.createElement('a');
+        a.href = r.url || '#';
+        a.target = '_blank';
+        a.rel = 'noopener noreferrer';
+        a.innerHTML = escapeHtml(r.title || 'Untitled');
+        a.style.color = 'inherit';
+        h3.appendChild(a);
+
+        const p = document.createElement('p');
+        const preview = (r.description || '').split(' ').slice(0, 60).join(' ');
+        p.textContent = preview + ((r.description || '').split(' ').length > 60 ? '...' : '');
+
+        const meta = document.createElement('div');
+        meta.className = 'metadata';
+        meta.textContent = `By ${r.author || 'unknown'} • Posted on ${r.created_at || 'N/A'}`;
+
+        const more = document.createElement('a');
+        more.href = r.url || '#';
+        more.target = '_blank';
+        more.rel = 'noopener noreferrer';
+        more.textContent = 'Read More on Reddit';
+        more.style.display = 'inline-block';
+        more.style.marginTop = '8px';
+        more.style.color = 'var(--accent)';
+
+        // see more toggle for full description
+        const seeMore = document.createElement('div');
+        seeMore.style.color = 'var(--accent)';
+        seeMore.style.cursor = 'pointer';
+        seeMore.style.marginTop = '10px';
+        seeMore.textContent = 'See More';
+        seeMore.onclick = () => {
+          if (p.textContent.endsWith('...')) {
+            p.textContent = r.full_description || (r.description || '');
+            seeMore.textContent = 'See Less';
+          } else {
+            p.textContent = preview + ((r.description || '').split(' ').length > 60 ? '...' : '');
+            seeMore.textContent = 'See More';
+          }
+        };
+
+        body.appendChild(h3);
+        body.appendChild(p);
+        body.appendChild(meta);
+        body.appendChild(more);
+        body.appendChild(seeMore);
+
+        card.appendChild(body);
+        resultsContainer.appendChild(card);
+
+        // build image grid item too
+        if (r.image_url) {
+          const imgCard = document.createElement('div');
+          imgCard.className = 'image-card';
+          imgCard.tabIndex = 0;
+          const imgEl = document.createElement('img');
+          imgEl.src = sanitizeImageUrl(r.image_url);
+          imgEl.alt = r.title || 'Image';
+          imgEl.loading = 'lazy';
+          imgEl.onerror = () => { imgEl.style.display = 'none'; };
+          imgCard.appendChild(imgEl);
+
+          const cap = document.createElement('div');
+          cap.className = 'image-caption';
+          cap.innerHTML = `<strong style="flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${escapeHtml(r.title || '')}</strong>`;
+          imgCard.appendChild(cap);
+
+          imgCard.onclick = () => openModal(imgEl.src, r.title);
+          imgCard.onkeypress = (e) => { if (e.key === 'Enter') openModal(imgEl.src, r.title); };
+
+          imagesGrid.appendChild(imgCard);
+        }
+      });
+
+      // if no images found show fallback
+      if (!imagesGrid.children.length) {
+        imagesGrid.innerHTML = `<div style="color:#ccc;padding:18px;background:#0f0f0f;border-radius:8px;">No images found for this query.</div>`;
       }
     }
 
-    function toggleDescription(button) {
-      const resultDiv = button.closest('.result');
-      const desc = resultDiv.querySelector('.description-preview');
-      const full = desc.dataset.full || '';
-      const preview = desc.dataset.preview || '';
-
-      if (desc.textContent === preview || desc.textContent === (preview + '...')) {
-        desc.textContent = full || preview;
-        button.textContent = 'See Less';
-      } else {
-        desc.textContent = preview + (full && full.split(' ').length > 60 ? '...' : '');
-        button.textContent = 'See More';
+    /* ---------- Fetch data from backend ---------- */
+    async function loadPage(page = 1) {
+      if (!initialQuery) return;
+      setLoading(true);
+      try {
+        const resp = await fetch(`${BACKEND_BASE}/get-answer?query=${encodeURIComponent(initialQuery)}&page=${page}&page_size=${PAGE_SIZE}`);
+        if (!resp.ok) throw new Error('Network error');
+        const data = await resp.json();
+        // update currentPage from response (server can clamp it)
+        currentPage = data.page || page;
+        renderPage(data);
+      } catch (err) {
+        console.error('Error loading page:', err);
+        resultsContainer.innerHTML = '';
+        imagesGrid.innerHTML = '';
+        noResults.style.display = 'block';
+        noResults.textContent = 'Error loading results. Try again later.';
+        pagination.style.display = 'none';
+      } finally {
+        setLoading(false);
       }
     }
 
+    function setLoading(state) {
+      setLoading = (s) => { // override further calls while running
+        loader.style.display = s ? 'flex' : 'none';
+      };
+      loader.style.display = state ? 'flex' : 'none';
+      // restore function to normal after small delay
+      setTimeout(() => {
+        setLoading = (s) => { loader.style.display = s ? 'flex' : 'none'; };
+      }, 0);
+    }
+
+    /* ---------- Modal ---------- */
     function openModal(src, alt) {
       const modal = document.getElementById('image-modal');
       const img = document.getElementById('modal-img');
       img.src = sanitizeImageUrl(src);
       img.alt = alt || 'Image';
       modal.classList.add('active');
-      modal.setAttribute('aria-hidden','false');
+      modal.setAttribute('aria-hidden', 'false');
     }
 
     function closeModal() {
       const modal = document.getElementById('image-modal');
       const img = document.getElementById('modal-img');
       modal.classList.remove('active');
-      modal.setAttribute('aria-hidden','true');
+      modal.setAttribute('aria-hidden', 'true');
       img.src = '';
     }
 
@@ -545,27 +412,18 @@
     });
     document.addEventListener('keydown', (e) => { if (e.key === 'Escape') closeModal(); });
 
-    (function fetchAndRender(){
-      const q = initialQuery;
-      if (!q) {
-        populateResults({results: []});
+    /* ---------- Init ---------- */
+    (function init(){
+      if (!initialQuery) {
+        // no initial query — show empty state
+        document.getElementById('results-container').innerHTML = '';
+        document.getElementById('images-grid').innerHTML = `<div style="color:#ccc;padding:18px;background:#0f0f0f;border-radius:8px;">Enter a query above to search Reddit.</div>`;
+        imagesContainer.style.display = 'none';
         return;
       }
-
-      fetch(`http://127.0.0.1:5000/get-answer?query=${encodeURIComponent(q)}`)
-        .then(resp => {
-          if (!resp.ok) throw new Error('Network response was not ok');
-          return resp.json();
-        })
-        .then(data => {
-          populateResults(data);
-        })
-        .catch(err => {
-          console.error('Error fetching answer:', err);
-          populateResults({results: []});
-        });
+      // load first requested page
+      loadPage(currentPage);
     })();
   </script>
-
 </body>
 </html>
