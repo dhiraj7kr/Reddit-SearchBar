@@ -25,32 +25,40 @@ def search_reddit(query):
         data = response.json()
         posts = data.get('data', {}).get('children', [])
         
-        # Extract titles, descriptions, and URLs of posts
+        # Extract titles, descriptions, URLs, and image URLs of posts
         results = []
         for post in posts:
-            title = post['data']['title']
-            description = post['data']['selftext'] if post['data']['selftext'] else "No description available."
+            post_data = post['data']
+            title = post_data['title']
+            description = post_data['selftext'] if post_data['selftext'] else "No description available."
             # Trim description to 3 lines (or a certain character length)
-            description = ' '.join(description.split()[:60])  # Get first 30 words (or you can split by sentences)
-            url = post['data']['url']
-            author = post['data']['author']
-            created_utc = post['data']['created_utc']
+            description = ' '.join(description.split()[:100])  # Get first 50 words (or you can split by sentences)
+            url = post_data['url']
+            author = post_data['author']
+            created_utc = post_data['created_utc']
             
             # Convert timestamp to human-readable format
             from datetime import datetime
             created_at = datetime.utcfromtimestamp(created_utc).strftime('%Y-%m-%d %H:%M:%S')
+            
+            # Check for image in the post (either from direct media or image URLs in the content)
+            image_url = None
+            if 'preview' in post_data and 'images' in post_data['preview']:
+                # Look for images if preview is present
+                image_url = post_data['preview']['images'][0].get('source', {}).get('url')
             
             results.append({
                 "title": title,
                 "description": description + '...',  # Add ellipsis to indicate truncated description
                 "url": url,
                 "author": author,
-                "created_at": created_at
+                "created_at": created_at,
+                "image_url": image_url
             })
         
         return results
     else:
-        return [{"title": "No relevant posts found", "description": "We couldn't find any relevant posts.", "url": ""}]
+        return [{"title": "No relevant posts found", "description": "We couldn't find any relevant posts.", "url": "", "image_url": None}]
 
 # Route to handle the question and return Reddit search results
 @app.route('/get-answer', methods=['GET'])

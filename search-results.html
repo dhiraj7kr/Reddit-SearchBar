@@ -1,236 +1,571 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Search Results - Reddit</title>
-    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500&display=swap" rel="stylesheet">
-    <style>
-        /* Global styles */
-        body {
-            font-family: 'Roboto', sans-serif;
-            background-color: #111;
-            color: #fff;
-            margin: 0;
-            padding: 0;
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
-        }
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Search Results - Reddit</title>
+  <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --accent: #ff4500;
+      --bg: #111;
+      --card: #1a1a1a;
+      --muted: #888;
+      --text: #fff;
+    }
+    *{box-sizing:border-box}
+    body {
+      font-family: 'Roboto', sans-serif;
+      background-color: var(--bg);
+      color: var(--text);
+      margin: 0;
+      padding: 24px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      min-height: 100vh;
+    }
 
-        h1 {
-            font-size: 2rem;
-            color: #ff4500;
-            margin-bottom: 20px;
-            text-align: center;
-        }
+    h1 {
+      font-size: 1.8rem;
+      color: var(--accent);
+      margin: 0 0 18px 0;
+      text-align: center;
+    }
 
-        /* Search bar container */
-        #search-container {
-            display: flex;
-            align-items: center;
-            margin-top: 20px;
-            width: 80%;
-            max-width: 600px;
-        }
+    .top-row {
+      width: 100%;
+      max-width: 1000px;
+      display: flex;
+      gap: 12px;
+      align-items: center;
+      margin-bottom: 14px;
+    }
 
-        #search-container .home-button {
-            font-size: 16px;
-            background-color: #ff4500;
-            padding: 10px 20px;
-            border: none;
-            border-radius: 30px;
-            color: white;
-            cursor: pointer;
-            margin-right: 10px;
-        }
+    #search-container {
+      display: flex;
+      align-items: center;
+      flex: 1;
+      gap: 10px;
+    }
 
-        #search-container input {
-            width: 100%;
-            padding: 10px 15px;
-            border-radius: 30px;
-            font-size: 16px;
-            border: 1px solid #ccc;
-            margin-right: 10px;
-            color: #333;
-        }
+    .home-button {
+      font-size: 15px;
+      background-color: var(--accent);
+      padding: 10px 18px;
+      border: none;
+      border-radius: 28px;
+      color: white;
+      cursor: pointer;
+    }
 
-        #search-container button {
-            padding: 10px 20px; /* Increased padding for better visibility */
-            background-color: #ff4500;
-            border: none;
-            border-radius: 30px;
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            min-width: 100px; /* Ensure the button has a minimum width */
-        }
+    #query {
+      width: 100%;
+      padding: 10px 14px;
+      border-radius: 28px;
+      font-size: 15px;
+      border: 1px solid #333;
+      background: #fff;
+      color: #222;
+    }
 
-        #search-container button i {
-            color: white;
-            font-size: 18px;
-            margin-right: 8px; /* Space between icon and text */
-        }
+    #search-btn {
+      padding: 10px 16px;
+      background-color: var(--accent);
+      border: none;
+      border-radius: 28px;
+      cursor: pointer;
+      color: white;
+      display:flex; align-items:center; gap:8px;
+    }
 
-        #search-container button span {
-            color: white;
-            font-size: 14px; /* Adjust text size */
-        }
+    .tabs {
+      display: flex;
+      gap: 8px;
+      margin-left: 6px;
+    }
 
-        /* Result list container */
-        .search-results {
-            width: 80%;
-            max-width: 900px;
-            margin-top: 40px;
-        }
+    .tab {
+      padding: 8px 14px;
+      border-radius: 20px;
+      background: #222;
+      color: #ccc;
+      cursor: pointer;
+      font-size: 14px;
+      border: 1px solid transparent;
+    }
 
-        .result {
-            background-color: #1a1a1a;
-            padding: 20px;
-            margin-bottom: 20px;
-            border-radius: 8px;
-            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
-        }
+    .tab.active {
+      background: linear-gradient(90deg, rgba(255,69,0,0.12), rgba(255,69,0,0.05));
+      color: var(--accent);
+      border-color: rgba(255,69,0,0.2);
+      box-shadow: 0 4px 14px rgba(0,0,0,0.5);
+    }
 
-        .result h3 {
-            font-size: 1.4rem;
-            color: #ff4500;
-            margin-bottom: 10px;
-        }
+    .content-wrap {
+      width: 100%;
+      max-width: 1000px;
+    }
 
-        .result p {
-            font-size: 1rem;
-            color: #ccc;
-        }
+    .search-results {
+      margin-top: 8px;
+      display: block;
+    }
 
-        .metadata {
-            font-size: 0.9rem;
-            color: #888;
-        }
+    .result {
+      background-color: var(--card);
+      padding: 18px;
+      margin-bottom: 16px;
+      border-radius: 10px;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.2);
+      display: flex;
+      gap: 14px;
+      align-items: flex-start;
+    }
 
-        .metadata span {
-            margin-right: 10px;
-        }
+    .result-body {
+      flex: 1 1 auto;
+    }
 
-        .result a {
-            color: #ff4500;
-            text-decoration: none;
-            font-size: 1rem;
-            display: inline-block;
-            margin-top: 10px;
-        }
+    .result h3 {
+      font-size: 1.15rem;
+      color: var(--accent);
+      margin: 0 0 8px 0;
+    }
 
-        .result a:hover {
-            text-decoration: underline;
-        }
+    .result p {
+      font-size: 0.98rem;
+      color: #d0d0d0;
+      margin: 0 0 8px 0;
+      line-height: 1.45;
+    }
 
-        .navigation {
-            display: flex;
-            justify-content: center;
-            margin-top: 40px;
-        }
+    .metadata {
+      font-size: 0.86rem;
+      color: var(--muted);
+    }
 
-        .navigation a {
-            margin: 0 10px;
-            color: #ccc;
-            text-decoration: none;
-            font-size: 14px;
-        }
+    .result a {
+      color: var(--accent);
+      text-decoration: none;
+      font-size: 0.95rem;
+      display: inline-block;
+      margin-top: 8px;
+    }
 
-        .navigation a:hover {
-            text-decoration: underline;
-        }
+    #images-container {
+      display: none;
+      margin-top: 8px;
+    }
 
-    </style>
+    .images-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+      gap: 12px;
+    }
+
+    .image-card {
+      background: #0f0f0f;
+      border-radius: 10px;
+      overflow: hidden;
+      height: 160px;
+      position: relative;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: transform .18s ease, box-shadow .18s ease;
+    }
+
+    .image-card img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display:block;
+      transform-origin: center;
+      transition: transform .25s ease;
+    }
+
+    .image-card:hover {
+      transform: translateY(-6px);
+      box-shadow: 0 10px 30px rgba(0,0,0,0.6);
+    }
+
+    .image-caption {
+      position: absolute;
+      bottom: 8px;
+      left: 8px;
+      right: 8px;
+      color: #fff;
+      font-size: 0.85rem;
+      background: linear-gradient(0deg, rgba(0,0,0,0.6), transparent);
+      padding: 8px 10px;
+      border-radius: 6px;
+      display:flex; gap:8px; align-items:center;
+    }
+
+    .modal {
+      position: fixed;
+      inset: 0;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      background: rgba(0,0,0,0.75);
+      z-index: 9999;
+    }
+
+    .modal.active { display:flex; }
+
+    .modal img {
+      max-width: 92%;
+      max-height: 86%;
+      border-radius: 8px;
+      box-shadow: 0 6px 30px rgba(0,0,0,0.6);
+    }
+
+    .modal .close-btn {
+      position: absolute;
+      top: 20px;
+      right: 24px;
+      background: rgba(0,0,0,0.45);
+      color: #fff;
+      border: 1px solid rgba(255,255,255,0.08);
+      padding: 8px 10px;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 14px;
+    }
+
+    .navigation {
+      display:flex;
+      gap: 12px;
+      margin-top: 22px;
+      color: #ccc;
+      font-size: 14px;
+    }
+
+    .navigation a { color: #ccc; text-decoration: none; }
+    .navigation a:hover { text-decoration: underline; }
+
+    @media (max-width: 640px) {
+      #query { font-size: 14px; }
+      .image-card { height: 140px; }
+      .top-row { flex-direction: column; align-items: stretch; gap: 12px; }
+      .tabs { margin-left: 0; justify-content: center; }
+      .result { flex-direction: column; align-items: stretch; }
+    }
+  </style>
 </head>
 <body>
 
-    <h1>Search Results for: <span id="query-text"></span></h1>
+  <h1>Search Results for: <span id="query-text"></span></h1>
 
-    <!-- Search Bar with Home button -->
+  <div class="top-row">
     <div id="search-container">
-        <button class="home-button" onclick="goHome()">Home</button>
-        <input type="text" id="query" placeholder="Search Reddit..." onkeydown="checkEnter(event)" />
-        <button onclick="searchReddit()">
-            <i class="fas fa-search"></i> <!-- Search icon -->
-            <span>Search</span> <!-- Text on the search button -->
-        </button>
+      <button class="home-button" onclick="goHome()">Home</button>
+      <input type="text" id="query" placeholder="Search Reddit..." onkeydown="checkEnter(event)" />
+      <button id="search-btn" onclick="searchReddit()">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden>
+          <path d="M21 21l-4.35-4.35" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+          <circle cx="11" cy="11" r="6" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+        <span>Search</span>
+      </button>
     </div>
 
-    <!-- Search Results -->
-    <div class="search-results" id="results-container">
-        <!-- Results will be inserted here -->
+    <div class="tabs" role="tablist" aria-label="Results Tabs">
+      <div class="tab active" id="tab-all" role="tab" aria-selected="true" onclick="switchTab('all')">All</div>
+      <div class="tab" id="tab-images" role="tab" aria-selected="false" onclick="switchTab('images')">Images</div>
+    </div>
+  </div>
+
+  <div class="content-wrap">
+    <div class="search-results" id="results-container"></div>
+
+    <div id="images-container">
+      <div class="images-grid" id="images-grid"></div>
     </div>
 
-    <!-- Navigation -->
-    <div class="navigation">
-        <a href="index.html">Back to Home</a>
-        <a href="#">Contact</a>
-    </div>
+    <div id="no-results" class="result" style="display:none; margin-top:12px;"></div>
+  </div>
 
-    <script src="https://kit.fontawesome.com/a076d05399.js"></script> <!-- FontAwesome for the search icon -->
-    
-    <script>
-        // Get query parameter from URL
-        const queryParams = new URLSearchParams(window.location.search);
-        const query = queryParams.get('query');
-        document.getElementById('query-text').textContent = query;
+  <div class="navigation">
+    <a href="index.html">Back to Home</a>
+    <a href="#">Contact</a>
+  </div>
 
-        // Function to go back to Home page
-        function goHome() {
-            window.location.href = "index.html";
+  <div class="modal" id="image-modal" role="dialog" aria-modal="true" aria-hidden="true">
+    <button class="close-btn" aria-label="Close" onclick="closeModal()">Close ✕</button>
+    <img id="modal-img" src="" alt="Large view">
+  </div>
+
+  <script>
+    // Get query parameter from URL
+    const queryParams = new URLSearchParams(window.location.search);
+    const initialQuery = queryParams.get('query') || '';
+    document.getElementById('query-text').textContent = initialQuery;
+    document.getElementById('query').value = initialQuery;
+
+    function switchTab(tab) {
+      const allTab = document.getElementById('tab-all');
+      const imgTab = document.getElementById('tab-images');
+      const results = document.getElementById('results-container');
+      const images = document.getElementById('images-container');
+
+      if (tab === 'images') {
+        imgTab.classList.add('active');
+        imgTab.setAttribute('aria-selected', 'true');
+        allTab.classList.remove('active');
+        allTab.setAttribute('aria-selected', 'false');
+        results.style.display = 'none';
+        images.style.display = 'block';
+      } else {
+        allTab.classList.add('active');
+        allTab.setAttribute('aria-selected', 'true');
+        imgTab.classList.remove('active');
+        imgTab.setAttribute('aria-selected', 'false');
+        results.style.display = 'block';
+        images.style.display = 'none';
+      }
+    }
+
+    function goHome() {
+      window.location.href = "index.html";
+    }
+
+    function searchReddit() {
+      const q = document.getElementById('query').value.trim();
+      if (q) {
+        window.location.href = `search-results.html?query=${encodeURIComponent(q)}`;
+      }
+    }
+
+    function checkEnter(e) {
+      if (e.key === 'Enter') searchReddit();
+    }
+
+    // sanitize reddit image urls
+    function sanitizeImageUrl(url) {
+      if (!url) return url;
+      // reddit sometimes returns URLs with &amp; or without protocol (//)
+      let u = String(url).trim();
+      u = u.replace(/&amp;/g, '&'); // decode ampersands
+      // if it's a preview url that contains escape sequences, try decodeURI
+      try { u = decodeURI(u); } catch(e) {}
+      // if protocol-less, make it https
+      if (u.startsWith('//')) u = 'https:' + u;
+      // some reddit preview urls are like "preview.redd.it/..." but without protocol
+      if (u.startsWith('preview.redd.it') || u.startsWith('i.redd.it') || u.startsWith('i.reddituploads.com')) u = 'https://' + u;
+      return u;
+    }
+
+    // helper to prevent XSS in inserted text (not for URLs)
+    function escapeHtml(str) {
+      if (!str) return '';
+      return String(str)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#039;');
+    }
+
+    function populateResults(data) {
+      const resultsContainer = document.getElementById('results-container');
+      const imagesGrid = document.getElementById('images-grid');
+      const noResultsDiv = document.getElementById('no-results');
+
+      resultsContainer.innerHTML = '';
+      imagesGrid.innerHTML = '';
+      noResultsDiv.style.display = 'none';
+
+      if (data.results && data.results.length > 0) {
+        data.results.forEach(result => {
+          // === Text result card ===
+          const r = document.createElement('div');
+          r.className = 'result';
+
+          const leftWrap = document.createElement('div');
+          leftWrap.className = 'result-thumbnail';
+          leftWrap.style.width = '240px';
+          leftWrap.style.flex = '0 0 240px';
+
+          const body = document.createElement('div');
+          body.className = 'result-body';
+
+          const title = document.createElement('h3');
+          const titleLink = document.createElement('a');
+          titleLink.href = result.url || '#';
+          titleLink.target = '_blank';
+          titleLink.rel = 'noopener noreferrer';
+          titleLink.innerHTML = escapeHtml(result.title || 'Untitled');
+          title.appendChild(titleLink);
+
+          const descriptionPreview = (result.description || '').split(' ').slice(0, 60).join(' ');
+          const descEl = document.createElement('p');
+          descEl.className = 'description-preview';
+          descEl.dataset.full = result.description || '';
+          descEl.dataset.preview = descriptionPreview;
+          descEl.textContent = descriptionPreview + ((result.description || '').split(' ').length > 60 ? '...' : '');
+
+          const meta = document.createElement('div');
+          meta.className = 'metadata';
+          meta.innerHTML = `By ${escapeHtml(result.author || 'unknown')} • Posted on ${escapeHtml(result.created_at || 'N/A')}`;
+
+          const moreLink = document.createElement('a');
+          moreLink.href = result.url || '#';
+          moreLink.target = '_blank';
+          moreLink.rel = 'noopener noreferrer';
+          moreLink.textContent = 'Read More on Reddit';
+
+          const seeMoreBtn = document.createElement('div');
+          seeMoreBtn.className = 'see-more';
+          seeMoreBtn.style.color = 'var(--accent)';
+          seeMoreBtn.style.cursor = 'pointer';
+          seeMoreBtn.style.marginTop = '10px';
+          seeMoreBtn.textContent = 'See More';
+          seeMoreBtn.onclick = () => toggleDescription(seeMoreBtn);
+
+          body.appendChild(title);
+          body.appendChild(descEl);
+          body.appendChild(meta);
+          body.appendChild(moreLink);
+          body.appendChild(seeMoreBtn);
+
+          // === Optional image thumbnail (create DOM element to avoid HTML-escaping issues) ===
+          if (result.image_url) {
+            const sanitized = sanitizeImageUrl(result.image_url);
+            const thumbWrap = document.createElement('div');
+            thumbWrap.style.display = 'flex';
+            thumbWrap.style.alignItems = 'center';
+            thumbWrap.style.justifyContent = 'center';
+            thumbWrap.style.marginLeft = '12px';
+            thumbWrap.style.flex = '0 0 240px';
+
+            const img = document.createElement('img');
+            img.alt = result.title || 'post image';
+            img.style.maxWidth = '240px';
+            img.style.maxHeight = '140px';
+            img.style.borderRadius = '6px';
+            img.style.objectFit = 'cover';
+            img.src = sanitized;
+            img.loading = 'lazy';
+            // safety: fallback if image fails to load
+            img.onerror = () => { img.style.display = 'none'; };
+
+            thumbWrap.appendChild(img);
+            r.appendChild(thumbWrap);
+          }
+
+          r.appendChild(body);
+          resultsContainer.appendChild(r);
+
+          // === Images grid card (for the Images tab) ===
+          if (result.image_url) {
+            const imgCard = document.createElement('div');
+            imgCard.className = 'image-card';
+            imgCard.tabIndex = 0;
+            imgCard.setAttribute('role','button');
+            imgCard.setAttribute('aria-pressed','false');
+
+            const imgEl = document.createElement('img');
+            imgEl.alt = result.title || 'Image';
+            imgEl.src = sanitizeImageUrl(result.image_url);
+            imgEl.loading = 'lazy';
+            imgEl.onerror = () => { imgEl.style.display = 'none'; };
+
+            imgCard.appendChild(imgEl);
+
+            const cap = document.createElement('div');
+            cap.className = 'image-caption';
+            const strong = document.createElement('strong');
+            strong.style.flex = '1';
+            strong.style.whiteSpace = 'nowrap';
+            strong.style.overflow = 'hidden';
+            strong.style.textOverflow = 'ellipsis';
+            strong.textContent = result.title || '';
+            cap.appendChild(strong);
+
+            imgCard.appendChild(cap);
+
+            imgCard.onclick = () => openModal(imgEl.src, result.title);
+            imgCard.onkeypress = (e) => { if (e.key === 'Enter') openModal(imgEl.src, result.title); };
+
+            imagesGrid.appendChild(imgCard);
+          }
+        });
+
+        // Show image fallback if no images found
+        if (imagesGrid.children.length === 0) {
+          imagesGrid.innerHTML = `<div style="color:#ccc;padding:18px;background:#0f0f0f;border-radius:8px;">No images found for this query.</div>`;
         }
 
-        // Function to search Reddit
-        function searchReddit() {
-            const query = document.getElementById('query').value;
-            if (query) {
-                window.location.href = `search-results.html?query=${encodeURIComponent(query)}`;
-            }
-        }
+      } else {
+        noResultsDiv.style.display = 'block';
+        noResultsDiv.textContent = "No relevant posts found on Reddit.";
+        document.getElementById('results-container').innerHTML = '';
+        document.getElementById('images-grid').innerHTML = `<div style="color:#ccc;padding:18px;background:#0f0f0f;border-radius:8px;">No images found for this query.</div>`;
+      }
+    }
 
-        // Function to handle "Enter" key in search bar
-        function checkEnter(event) {
-            if (event.key === 'Enter') {
-                searchReddit();
-            }
-        }
+    function toggleDescription(button) {
+      const resultDiv = button.closest('.result');
+      const desc = resultDiv.querySelector('.description-preview');
+      const full = desc.dataset.full || '';
+      const preview = desc.dataset.preview || '';
 
-        // Simulated API data fetching for the search results (replace this with actual API call)
-        fetch(`http://127.0.0.1:5000/get-answer?query=${encodeURIComponent(query)}`)
-            .then(response => response.json())
-            .then(data => {
-                const resultsContainer = document.getElementById('results-container');
-                
-                if (data.results && data.results.length > 0) {
-                    data.results.forEach(result => {
-                        const resultDiv = document.createElement('div');
-                        resultDiv.classList.add('result');
-                        
-                        resultDiv.innerHTML = ` 
-                            <h3><a href="${result.url}" target="_blank">${result.title}</a></h3>
-                            <p>${result.description}</p>
-                            <div class="metadata">
-                                <span>By ${result.author}</span> 
-                                <span>Posted on ${result.created_at}</span>
-                            </div>
-                            <a href="${result.url}" target="_blank">Read More on Reddit</a>
-                        `;
-                        resultsContainer.appendChild(resultDiv);
-                    });
-                } else {
-                    const noResultsDiv = document.createElement('div');
-                    noResultsDiv.classList.add('result');
-                    noResultsDiv.textContent = "No relevant posts found on Reddit.";
-                    resultsContainer.appendChild(noResultsDiv);
-                }
-            })
-            .catch(error => {
-                console.error('Error fetching answer:', error);
-            });
-    </script>
+      if (desc.textContent === preview || desc.textContent === (preview + '...')) {
+        desc.textContent = full || preview;
+        button.textContent = 'See Less';
+      } else {
+        desc.textContent = preview + (full && full.split(' ').length > 60 ? '...' : '');
+        button.textContent = 'See More';
+      }
+    }
+
+    function openModal(src, alt) {
+      const modal = document.getElementById('image-modal');
+      const img = document.getElementById('modal-img');
+      img.src = sanitizeImageUrl(src);
+      img.alt = alt || 'Image';
+      modal.classList.add('active');
+      modal.setAttribute('aria-hidden','false');
+    }
+
+    function closeModal() {
+      const modal = document.getElementById('image-modal');
+      const img = document.getElementById('modal-img');
+      modal.classList.remove('active');
+      modal.setAttribute('aria-hidden','true');
+      img.src = '';
+    }
+
+    document.getElementById('image-modal').addEventListener('click', (e) => {
+      if (e.target.id === 'image-modal') closeModal();
+    });
+    document.addEventListener('keydown', (e) => { if (e.key === 'Escape') closeModal(); });
+
+    (function fetchAndRender(){
+      const q = initialQuery;
+      if (!q) {
+        populateResults({results: []});
+        return;
+      }
+
+      fetch(`http://127.0.0.1:5000/get-answer?query=${encodeURIComponent(q)}`)
+        .then(resp => {
+          if (!resp.ok) throw new Error('Network response was not ok');
+          return resp.json();
+        })
+        .then(data => {
+          populateResults(data);
+        })
+        .catch(err => {
+          console.error('Error fetching answer:', err);
+          populateResults({results: []});
+        });
+    })();
+  </script>
 
 </body>
 </html>
