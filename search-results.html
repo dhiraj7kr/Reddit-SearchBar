@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>Search Results - Reddit</title>
   <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500&display=swap" rel="stylesheet">
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
   <style>
     :root{
       --accent:#ff4500;
@@ -27,6 +28,27 @@
 
     .top-row{display:flex;gap:10px;align-items:center;margin-bottom:14px}
     #search-container{display:flex;gap:10px;flex:1;align-items:center}
+    
+    /* Home Button Style */
+    .home-btn {
+        background: #222;
+        color: #fff;
+        border: 1px solid #333;
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        text-decoration: none;
+        transition: 0.2s;
+        font-size: 1.1rem;
+    }
+    .home-btn:hover {
+        background: var(--accent);
+        border-color: var(--accent);
+    }
+
     #query{flex:1;padding:8px 12px;border-radius:24px;border:1px solid #333;background:#fff;color:#222}
     .btn{background:var(--accent);color:#fff;padding:8px 12px;border-radius:20px;border:none;cursor:pointer}
     .tabs{display:flex;gap:8px}
@@ -54,7 +76,7 @@
     .page-btn[disabled]{opacity:0.45;cursor:not-allowed}
     .page-info{color:var(--muted);font-size:0.95rem}
 
-    .loader{display:flex;align-items:center;gap:8px;color:var(--muted)}
+    .loader{display:flex;align-items:center;justify-content:center;gap:8px;color:var(--muted); padding: 20px;}
     .no-results{padding:18px;background:#161616;border-radius:8px;color:#ccc;margin-top:12px;text-align:center}
 
     /* modal */
@@ -71,6 +93,10 @@
     <h1>Search Results for: <span id="query-text"></span></h1>
 
     <div class="top-row">
+      <a href="index.html" class="home-btn" title="Go Home">
+        <i class="fas fa-home"></i>
+      </a>
+
       <div id="search-container">
         <input id="query" type="text" placeholder="Search Reddit..." onkeydown="if(event.key==='Enter') goSearch()" />
         <button id="search-btn" class="btn" onclick="goSearch()">Search</button>
@@ -83,43 +109,34 @@
     </div>
 
     <div class="content">
-      <div id="loader" class="loader" style="display:none">Loading…</div>
+      <div id="loader" class="loader" style="display:none">Loading data...</div>
 
-      <!-- Text results -->
       <div id="results-section">
         <div id="results-container" class="results-list"></div>
         <div id="no-results" class="no-results" style="display:none">No relevant posts found on Reddit.</div>
       </div>
 
-      <!-- Image grid -->
       <div id="images-container">
         <div id="images-grid" class="images-grid"></div>
       </div>
 
-      <!-- Pagination controls -->
       <div class="pagination" id="pagination" style="display:none">
-        <button id="prev-btn" class="page-btn" onclick="goToPage(currentPage - 1)">Previous</button>
+        <button id="prev-btn" class="page-btn" onclick="prevPage()">Previous</button>
         <div class="page-info">
-          Page <strong id="page-num">1</strong> of <strong id="page-total">1</strong>
+          Page <strong id="page-num">1</strong>
         </div>
-        <button id="next-btn" class="page-btn" onclick="goToPage(currentPage + 1)">Next</button>
-
-        <div style="display:flex;align-items:center;gap:8px;margin-left:18px">
-          <input id="jump-to" type="number" min="1" style="width:72px;padding:6px;border-radius:6px;border:1px solid #222;background:#111;color:#fff" placeholder="Page" />
-          <button class="page-btn" onclick="jumpTo()">Go</button>
-        </div>
+        <button id="next-btn" class="page-btn" onclick="nextPage()">Next</button>
       </div>
     </div>
 
     <div style="height:28px"></div>
 
-    <div class="navigation" style="display:flex;gap:12px;color:#ccc;font-size:14px">
+    <div class="navigation" style="display:flex;gap:12px;color:#ccc;font-size:14px;justify-content: center;">
       <a href="index.html" style="color:#ccc;text-decoration:none">Back to Home</a>
       <a href="#" style="color:#ccc;text-decoration:none">Contact</a>
     </div>
   </div>
 
-  <!-- modal -->
   <div class="modal" id="image-modal" role="dialog" aria-modal="true" aria-hidden="true">
     <button class="close-btn" onclick="closeModal()">Close ✕</button>
     <img id="modal-img" src="" alt="Large view">
@@ -127,13 +144,15 @@
 
   <script>
     /* ---------- Config ---------- */
-    const BACKEND_BASE = 'http://127.0.0.1:5000'; // change if your backend runs elsewhere
-    const PAGE_SIZE = 10; // must match server-side page_size
-
-    /* ---------- Read initial query & page from URL ---------- */
+    const BACKEND_BASE = 'http://127.0.0.1:5000'; 
+    
+    /* ---------- State ---------- */
     const urlParams = new URLSearchParams(window.location.search);
-    let initialQuery = urlParams.get('query') || '';
-    let currentPage = parseInt(urlParams.get('page') || '1', 10) || 1;
+    let currentQuery = urlParams.get('query') || '';
+    
+    // Pagination State
+    let pageTokens = ['']; // Index 0 is Page 1 (which has no 'after' token)
+    let pageIndex = 0; // 0-based index
 
     // UI elements
     const qText = document.getElementById('query-text');
@@ -145,15 +164,15 @@
     const loader = document.getElementById('loader');
     const pagination = document.getElementById('pagination');
     const pageNumEl = document.getElementById('page-num');
-    const pageTotalEl = document.getElementById('page-total');
     const prevBtn = document.getElementById('prev-btn');
     const nextBtn = document.getElementById('next-btn');
 
     // initialize UI
-    qText.textContent = initialQuery;
-    qInput.value = initialQuery;
+    qText.textContent = currentQuery;
+    qInput.value = currentQuery;
 
-    // Tab handling
+    /* ---------- Logic ---------- */
+
     function switchTab(tab) {
       const allTab = document.getElementById('tab-all');
       const imgTab = document.getElementById('tab-images');
@@ -170,102 +189,108 @@
       }
     }
 
-    // Navigation helpers
-    function updateUrl(query, page) {
-      const u = new URL(window.location.href);
-      if (query) u.searchParams.set('query', query);
-      else u.searchParams.delete('query');
-      u.searchParams.set('page', String(page || 1));
-      window.history.replaceState({}, '', u.toString());
-    }
-
     function goSearch() {
       const q = qInput.value.trim();
       if (!q) return;
-      initialQuery = q;
-      currentPage = 1;
-      updateUrl(initialQuery, currentPage);
-      loadPage(currentPage);
+      currentQuery = q;
+      
+      // Reset State
+      pageTokens = [''];
+      pageIndex = 0;
+      
+      qText.textContent = currentQuery;
+      // Update URL without reloading
+      const u = new URL(window.location.href);
+      u.searchParams.set('query', currentQuery);
+      window.history.replaceState({}, '', u.toString());
+      
+      loadData();
     }
 
-    function goToPage(page) {
-      if (page < 1) return;
-      if (page === currentPage) return;
-      currentPage = page;
-      updateUrl(initialQuery, currentPage);
-      loadPage(currentPage);
-      window.scrollTo({ top: 0, behavior: 'smooth' });
+    function nextPage() {
+        if (pageIndex < pageTokens.length - 1) {
+            pageIndex++;
+            loadData();
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
     }
 
-    function jumpTo() {
-      const v = parseInt(document.getElementById('jump-to').value || '0', 10);
-      if (!v || v < 1) return;
-      goToPage(v);
+    function prevPage() {
+        if (pageIndex > 0) {
+            pageIndex--;
+            loadData();
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
     }
 
-    /* ---------- Utilities ---------- */
-    function sanitizeImageUrl(url) {
-      if (!url) return url;
-      let u = String(url).trim();
-      u = u.replace(/&amp;/g, '&');
-      try { u = decodeURI(u); } catch(e) {}
-      if (u.startsWith('//')) u = 'https:' + u;
-      if (u.startsWith('preview.redd.it') || u.startsWith('i.redd.it') || u.startsWith('i.reddituploads.com')) u = 'https://' + u;
-      return u;
+    /* ---------- Fetch & Render ---------- */
+    async function loadData() {
+      if (!currentQuery) return;
+      
+      setLoading(true);
+      
+      // Get the token for the current page
+      const afterToken = pageTokens[pageIndex] || '';
+
+      try {
+        const resp = await fetch(`${BACKEND_BASE}/get-answer?query=${encodeURIComponent(currentQuery)}&after=${afterToken}`);
+        if (!resp.ok) throw new Error('Network error');
+        
+        const data = await resp.json();
+        
+        // Handle "Next" token logic
+        // If we are on the last known page, and server gives a new token, add it to stack
+        if (data.after && pageIndex === pageTokens.length - 1) {
+            pageTokens.push(data.after);
+        }
+
+        renderPage(data.results);
+        updatePaginationUI(data.after);
+
+      } catch (err) {
+        console.error('Error loading data:', err);
+        resultsContainer.innerHTML = '';
+        noResults.style.display = 'block';
+        noResults.textContent = 'Error loading results.';
+      } finally {
+        setLoading(false);
+      }
     }
 
-    function escapeHtml(str) {
-      if (!str) return '';
-      return String(str)
-        .replace(/&/g, '&amp;')
-        .replace(/</g, '&lt;')
-        .replace(/>/g, '&gt;')
-        .replace(/"/g, '&quot;')
-        .replace(/'/g, '&#039;');
+    function updatePaginationUI(serverNextToken) {
+        pageNumEl.textContent = pageIndex + 1;
+        
+        // Enable Prev if index > 0
+        prevBtn.disabled = (pageIndex === 0);
+        
+        // Enable Next if we have a token for the next page OR the server just gave us one
+        const hasNext = (pageIndex < pageTokens.length - 1) || (!!serverNextToken);
+        nextBtn.disabled = !hasNext;
+        
+        pagination.style.display = 'flex';
     }
 
-    /* ---------- Render ---------- */
-    function setLoading(on) {
-      loader.style.display = on ? 'flex' : 'none';
-    }
-
-    function renderPage(response) {
-      // Response fields: page, page_size, total_results, total_pages, results[]
-      const data = response;
-      const results = data.results || [];
-      const totalPages = data.total_pages || 1;
-      const totalResults = data.total_results || 0;
-      // update pagination UI
-      pageNumEl.textContent = data.page || '1';
-      pageTotalEl.textContent = totalPages;
-      pagination.style.display = totalPages > 0 ? 'flex' : 'none';
-      prevBtn.disabled = !data.has_prev;
-      nextBtn.disabled = !data.has_next;
-
-      // populate text results
+    function renderPage(results) {
       resultsContainer.innerHTML = '';
       imagesGrid.innerHTML = '';
       noResults.style.display = 'none';
 
-      if (!results.length) {
+      if (!results || !results.length) {
         noResults.style.display = 'block';
-        imagesGrid.innerHTML = `<div style="color:#ccc;padding:18px;background:#0f0f0f;border-radius:8px;">No images found for this query.</div>`;
+        imagesGrid.innerHTML = `<div style="color:#ccc;padding:18px;">No images found.</div>`;
         return;
       }
 
       results.forEach(r => {
-        // build result card
+        // --- Text Card ---
         const card = document.createElement('div');
         card.className = 'result';
 
-        // optional thumbnail area
         if (r.image_url) {
           const thumbWrap = document.createElement('div');
           thumbWrap.className = 'thumbnail';
           const img = document.createElement('img');
           img.src = sanitizeImageUrl(r.image_url);
-          img.alt = r.title || 'post image';
-          img.loading = 'lazy';
           img.onerror = () => { img.style.display = 'none'; };
           thumbWrap.appendChild(img);
           card.appendChild(thumbWrap);
@@ -278,115 +303,82 @@
         const a = document.createElement('a');
         a.href = r.url || '#';
         a.target = '_blank';
-        a.rel = 'noopener noreferrer';
-        a.innerHTML = escapeHtml(r.title || 'Untitled');
+        a.textContent = r.title || 'Untitled';
         a.style.color = 'inherit';
         h3.appendChild(a);
 
         const p = document.createElement('p');
-        const preview = (r.description || '').split(' ').slice(0, 60).join(' ');
-        p.textContent = preview + ((r.description || '').split(' ').length > 60 ? '...' : '');
+        p.textContent = r.description || '';
 
         const meta = document.createElement('div');
         meta.className = 'metadata';
-        meta.textContent = `By ${r.author || 'unknown'} • Posted on ${r.created_at || 'N/A'}`;
-
-        const more = document.createElement('a');
-        more.href = r.url || '#';
-        more.target = '_blank';
-        more.rel = 'noopener noreferrer';
-        more.textContent = 'Read More on Reddit';
-        more.style.display = 'inline-block';
-        more.style.marginTop = '8px';
-        more.style.color = 'var(--accent)';
-
-        // see more toggle for full description
-        const seeMore = document.createElement('div');
-        seeMore.style.color = 'var(--accent)';
-        seeMore.style.cursor = 'pointer';
-        seeMore.style.marginTop = '10px';
-        seeMore.textContent = 'See More';
-        seeMore.onclick = () => {
-          if (p.textContent.endsWith('...')) {
-            p.textContent = r.full_description || (r.description || '');
-            seeMore.textContent = 'See Less';
-          } else {
-            p.textContent = preview + ((r.description || '').split(' ').length > 60 ? '...' : '');
-            seeMore.textContent = 'See More';
-          }
-        };
+        meta.textContent = `By ${r.author || 'unknown'} • ${r.created_at || ''}`;
+        
+        // "See More" / Full Text Toggle
+        if (r.full_description && r.full_description.length > r.description.length) {
+             const toggleBtn = document.createElement('span');
+             toggleBtn.textContent = " [Show More]";
+             toggleBtn.style.color = "var(--accent)";
+             toggleBtn.style.cursor = "pointer";
+             toggleBtn.style.fontSize = "0.9rem";
+             toggleBtn.onclick = function() {
+                 if(p.textContent === r.description) {
+                     p.textContent = r.full_description;
+                     toggleBtn.textContent = " [Show Less]";
+                 } else {
+                     p.textContent = r.description;
+                     toggleBtn.textContent = " [Show More]";
+                 }
+             };
+             meta.appendChild(toggleBtn);
+        }
 
         body.appendChild(h3);
         body.appendChild(p);
         body.appendChild(meta);
-        body.appendChild(more);
-        body.appendChild(seeMore);
-
         card.appendChild(body);
         resultsContainer.appendChild(card);
 
-        // build image grid item too
+        // --- Image Grid Item ---
         if (r.image_url) {
           const imgCard = document.createElement('div');
           imgCard.className = 'image-card';
-          imgCard.tabIndex = 0;
-          const imgEl = document.createElement('img');
-          imgEl.src = sanitizeImageUrl(r.image_url);
-          imgEl.alt = r.title || 'Image';
-          imgEl.loading = 'lazy';
-          imgEl.onerror = () => { imgEl.style.display = 'none'; };
-          imgCard.appendChild(imgEl);
-
+          imgCard.onclick = () => openModal(r.image_url, r.title);
+          
+          const gImg = document.createElement('img');
+          gImg.src = sanitizeImageUrl(r.image_url);
+          imgCard.appendChild(gImg);
+          
           const cap = document.createElement('div');
           cap.className = 'image-caption';
-          cap.innerHTML = `<strong style="flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${escapeHtml(r.title || '')}</strong>`;
+          cap.innerHTML = `<strong>${escapeHtml(r.title)}</strong>`;
           imgCard.appendChild(cap);
-
-          imgCard.onclick = () => openModal(imgEl.src, r.title);
-          imgCard.onkeypress = (e) => { if (e.key === 'Enter') openModal(imgEl.src, r.title); };
-
+          
           imagesGrid.appendChild(imgCard);
         }
       });
-
-      // if no images found show fallback
+      
+      // If no images
       if (!imagesGrid.children.length) {
-        imagesGrid.innerHTML = `<div style="color:#ccc;padding:18px;background:#0f0f0f;border-radius:8px;">No images found for this query.</div>`;
+         imagesGrid.innerHTML = `<div style="color:#ccc;padding:18px;">No images in this batch.</div>`;
       }
     }
 
-    /* ---------- Fetch data from backend ---------- */
-    async function loadPage(page = 1) {
-      if (!initialQuery) return;
-      setLoading(true);
-      try {
-        const resp = await fetch(`${BACKEND_BASE}/get-answer?query=${encodeURIComponent(initialQuery)}&page=${page}&page_size=${PAGE_SIZE}`);
-        if (!resp.ok) throw new Error('Network error');
-        const data = await resp.json();
-        // update currentPage from response (server can clamp it)
-        currentPage = data.page || page;
-        renderPage(data);
-      } catch (err) {
-        console.error('Error loading page:', err);
-        resultsContainer.innerHTML = '';
-        imagesGrid.innerHTML = '';
-        noResults.style.display = 'block';
-        noResults.textContent = 'Error loading results. Try again later.';
-        pagination.style.display = 'none';
-      } finally {
-        setLoading(false);
-      }
+    /* ---------- Utils ---------- */
+    function sanitizeImageUrl(url) {
+      if (!url) return '';
+      let u = String(url).trim().replace(/&amp;/g, '&');
+      if (u.startsWith('//')) u = 'https:' + u;
+      return u;
+    }
+    
+    function escapeHtml(str) {
+      if (!str) return '';
+      return String(str).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
     }
 
     function setLoading(state) {
-      setLoading = (s) => { // override further calls while running
-        loader.style.display = s ? 'flex' : 'none';
-      };
       loader.style.display = state ? 'flex' : 'none';
-      // restore function to normal after small delay
-      setTimeout(() => {
-        setLoading = (s) => { loader.style.display = s ? 'flex' : 'none'; };
-      }, 0);
     }
 
     /* ---------- Modal ---------- */
@@ -394,35 +386,22 @@
       const modal = document.getElementById('image-modal');
       const img = document.getElementById('modal-img');
       img.src = sanitizeImageUrl(src);
-      img.alt = alt || 'Image';
       modal.classList.add('active');
-      modal.setAttribute('aria-hidden', 'false');
     }
-
     function closeModal() {
-      const modal = document.getElementById('image-modal');
-      const img = document.getElementById('modal-img');
-      modal.classList.remove('active');
-      modal.setAttribute('aria-hidden', 'true');
-      img.src = '';
+      document.getElementById('image-modal').classList.remove('active');
     }
-
     document.getElementById('image-modal').addEventListener('click', (e) => {
       if (e.target.id === 'image-modal') closeModal();
     });
-    document.addEventListener('keydown', (e) => { if (e.key === 'Escape') closeModal(); });
 
     /* ---------- Init ---------- */
     (function init(){
-      if (!initialQuery) {
-        // no initial query — show empty state
-        document.getElementById('results-container').innerHTML = '';
-        document.getElementById('images-grid').innerHTML = `<div style="color:#ccc;padding:18px;background:#0f0f0f;border-radius:8px;">Enter a query above to search Reddit.</div>`;
-        imagesContainer.style.display = 'none';
-        return;
+      if (currentQuery) loadData();
+      else {
+          document.getElementById('results-container').innerHTML = ''; 
+          pagination.style.display = 'none';
       }
-      // load first requested page
-      loadPage(currentPage);
     })();
   </script>
 </body>

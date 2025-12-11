@@ -4,105 +4,232 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Reddit Search</title>
-    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    
     <style>
-        /* Global styles */
-        body {
-            font-family: 'Roboto', sans-serif;
-            background-color: #111;
-            color: #fff;
-            margin: 0;
-            padding: 0;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            height: 100vh;
-            flex-direction: column;
-        }
-        
-        h1 {
-            font-size: 2.8rem;
-            color: #ff4500;
-            margin-bottom: 20px;
-            text-align: center;
-        }
-        
-        #search-container {
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            width: 100%;
-            max-width: 500px;
+        :root {
+            --primary: #ff4500; /* Reddit Orange */
+            --primary-hover: #ff571a;
+            --bg-dark: #0f0f0f;
+            --glass-bg: rgba(255, 255, 255, 0.05);
+            --glass-border: rgba(255, 255, 255, 0.1);
+            --text-main: #ffffff;
+            --text-muted: #a0a0a0;
         }
 
-        .input-wrapper {
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Poppins', sans-serif;
+            background-color: var(--bg-dark);
+            /* Subtle radial gradient for depth */
+            background-image: radial-gradient(circle at 50% 30%, #1a1a1a 0%, #050505 100%);
+            color: var(--text-main);
+            height: 100vh;
             display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            overflow: hidden;
+        }
+
+        /* Background decoration circles */
+        .glow-effect {
+            position: absolute;
+            width: 600px;
+            height: 600px;
+            background: radial-gradient(circle, rgba(255, 69, 0, 0.08) 0%, transparent 70%);
+            top: -200px;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: -1;
+            pointer-events: none;
+        }
+
+        /* Main Container */
+        .hero-container {
+            text-align: center;
+            width: 90%;
+            max-width: 600px;
+            animation: fadeIn 0.8s ease-out;
+            padding: 40px;
+        }
+
+        /* Logo / Title Area */
+        .brand {
+            margin-bottom: 40px;
+        }
+
+        .brand i {
+            font-size: 3.5rem;
+            color: var(--primary);
+            margin-bottom: 15px;
+            display: inline-block;
+            filter: drop-shadow(0 0 15px rgba(255, 69, 0, 0.3));
+        }
+
+        .brand h1 {
+            font-size: 2.5rem;
+            font-weight: 600;
+            letter-spacing: -1px;
+            background: linear-gradient(135deg, #fff 0%, #ccc 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .brand p {
+            color: var(--text-muted);
+            font-size: 1rem;
+            margin-top: 8px;
+            font-weight: 300;
+        }
+
+        /* Search Bar Wrapper */
+        .search-wrapper {
+            position: relative;
             width: 100%;
-            max-width: 450px;
+            background: var(--glass-bg);
+            border: 1px solid var(--glass-border);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            border-radius: 50px;
+            display: flex;
+            align-items: center;
+            padding: 8px;
+            transition: all 0.3s ease;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+        }
+
+        .search-wrapper:focus-within {
+            border-color: var(--primary);
+            box-shadow: 0 0 20px rgba(255, 69, 0, 0.2);
+            transform: translateY(-2px);
+            background: rgba(255, 255, 255, 0.08);
+        }
+
+        .search-icon {
+            padding-left: 20px;
+            color: var(--text-muted);
+            font-size: 1.1rem;
         }
 
         input {
             width: 100%;
-            padding: 15px;
-            font-size: 18px;
-            border-radius: 50px;
-            border: 1px solid #ccc;
+            background: transparent;
+            border: none;
             outline: none;
-            color: #333;
+            color: #fff;
+            padding: 16px 16px;
+            font-size: 1.1rem;
+            font-family: 'Poppins', sans-serif;
         }
 
-        input:focus {
-            border-color: #ff4500;
+        input::placeholder {
+            color: rgba(255, 255, 255, 0.3);
         }
 
         button {
-            padding: 15px 20px;
-            border-radius: 50px;
-            background-color: #ff4500;
+            background: linear-gradient(135deg, var(--primary), #ff7043);
             color: white;
-            font-size: 16px;
             border: none;
+            padding: 14px 32px;
+            border-radius: 50px;
+            font-size: 1rem;
+            font-weight: 600;
             cursor: pointer;
-            margin-left: 10px;
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+            white-space: nowrap;
         }
 
         button:hover {
-            background-color: #e83a00;
+            transform: scale(1.05);
+            box-shadow: 0 0 15px rgba(255, 69, 0, 0.4);
         }
 
-        .navigation {
+        button:active {
+            transform: scale(0.95);
+        }
+
+        /* Footer Navigation */
+        .footer-nav {
+            margin-top: 60px;
             display: flex;
+            gap: 25px;
             justify-content: center;
-            margin-top: 20px;
+            opacity: 0;
+            animation: fadeIn 1s ease-out 0.3s forwards;
         }
 
-        .navigation a {
-            margin: 0 10px;
-            color: #ccc;
+        .footer-nav a {
+            color: var(--text-muted);
             text-decoration: none;
-            font-size: 14px;
+            font-size: 0.9rem;
+            transition: color 0.2s;
+            position: relative;
         }
 
-        .navigation a:hover {
-            text-decoration: underline;
+        .footer-nav a:hover {
+            color: #fff;
+        }
+
+        .footer-nav a::after {
+            content: '';
+            position: absolute;
+            width: 0;
+            height: 1px;
+            bottom: -4px;
+            left: 50%;
+            background: var(--primary);
+            transition: all 0.3s;
+            transform: translateX(-50%);
+        }
+
+        .footer-nav a:hover::after {
+            width: 100%;
+        }
+
+        /* Animations */
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* Mobile tweaks */
+        @media (max-width: 600px) {
+            .brand h1 { font-size: 2rem; }
+            button { padding: 14px 24px; }
+            .hero-container { padding: 20px; }
         }
     </style>
 </head>
 <body>
 
-    <h1>Reddit Search</h1>
+    <div class="glow-effect"></div>
 
-    <div id="search-container">
-        <div class="input-wrapper">
-            <input type="text" id="query" placeholder="Search Reddit..." />
+    <div class="hero-container">
+        <div class="brand">
+            <i class="fab fa-reddit-alien"></i>
+            <h1>Reddit Search</h1>
+            <p>Explore discussions, images, and threads.</p>
+        </div>
+
+        <div class="search-wrapper">
+            <i class="fas fa-search search-icon"></i>
+            <input type="text" id="query" placeholder="Type to search..." autocomplete="off">
             <button onclick="searchReddit()">Search</button>
         </div>
-    </div>
 
-    <div class="navigation">
-        <a href="#">Home</a>
-        <a href="#">About</a>
-        <a href="#">Contact</a>
+        <div class="footer-nav">
+            <a href="#">About</a>
+            <a href="#">API</a>
+            <a href="#">Privacy</a>
+            <a href="#">Contact</a>
+        </div>
     </div>
 
     <script>
@@ -116,9 +243,30 @@
         function searchReddit() {
             const query = document.getElementById('query').value;
             if(query) {
-                window.location.href = `search-results.html?query=${encodeURIComponent(query)}`;
+                // Add a small delay for visual feedback if desired, or go straight
+                const btn = document.querySelector('button');
+                btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
+                
+                setTimeout(() => {
+                    window.location.href = `search-results.html?query=${encodeURIComponent(query)}`;
+                }, 100);
+            } else {
+                // Shake animation for empty input
+                const wrapper = document.querySelector('.search-wrapper');
+                wrapper.style.animation = 'shake 0.4s ease';
+                setTimeout(() => wrapper.style.animation = '', 400);
             }
         }
     </script>
+    
+    <style>
+        /* Add shake animation for error handling */
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-5px); }
+            75% { transform: translateX(5px); }
+        }
+    </style>
+
 </body>
 </html>
