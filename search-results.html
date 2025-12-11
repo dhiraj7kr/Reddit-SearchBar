@@ -4,7 +4,7 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>Search Results - Reddit</title>
-  <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
   <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
   <style>
     :root{
@@ -13,79 +13,131 @@
       --card:#1a1a1a;
       --muted:#888;
       --text:#fff;
+      --sidebar-bg: #151515;
     }
     *{box-sizing:border-box}
     body{
       font-family:'Roboto',sans-serif;
       background:var(--bg);
       color:var(--text);
-      margin:0;padding:20px;display:flex;flex-direction:column;align-items:center;min-height:100vh;
+      margin:0;padding:20px;
+      min-height:100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
     }
 
-    .container{width:100%;max-width:1000px}
+    .container{width:100%;max-width:1100px}
 
     h1{font-size:1.6rem;color:var(--accent);margin:0 0 14px;text-align:center}
 
-    .top-row{display:flex;gap:10px;align-items:center;margin-bottom:14px}
+    /* Top Row */
+    .top-row{display:flex;gap:10px;align-items:center;margin-bottom:20px}
     #search-container{display:flex;gap:10px;flex:1;align-items:center}
     
-    /* Home Button Style */
     .home-btn {
-        background: #222;
-        color: #fff;
-        border: 1px solid #333;
-        width: 40px;
-        height: 40px;
-        border-radius: 50%;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        text-decoration: none;
-        transition: 0.2s;
-        font-size: 1.1rem;
+        background: #222; color: #fff; border: 1px solid #333;
+        width: 40px; height: 40px; border-radius: 50%;
+        display: flex; align-items: center; justify-content: center;
+        text-decoration: none; transition: 0.2s; font-size: 1.1rem;
     }
-    .home-btn:hover {
-        background: var(--accent);
-        border-color: var(--accent);
-    }
+    .home-btn:hover { background: var(--accent); border-color: var(--accent); }
 
     #query{flex:1;padding:8px 12px;border-radius:24px;border:1px solid #333;background:#fff;color:#222}
     .btn{background:var(--accent);color:#fff;padding:8px 12px;border-radius:20px;border:none;cursor:pointer}
     .tabs{display:flex;gap:8px}
     .tab{padding:8px 12px;border-radius:18px;background:#222;color:#ccc;cursor:pointer;border:1px solid transparent}
-    .tab.active{background:linear-gradient(90deg, rgba(255,69,0,0.12), rgba(255,69,0,0.05));color:var(--accent);border-color:rgba(255,69,0,0.18)}
+    .tab.active{background:rgba(255,69,0,0.15);color:var(--accent);border-color:rgba(255,69,0,0.3)}
 
-    .content{background:transparent;width:100%}
-    .results-list{margin-top:8px;display:block}
+    /* --- LAYOUT GRID --- */
+    .layout-grid {
+        display: grid;
+        grid-template-columns: 1fr 300px; /* Left content, Right sidebar */
+        gap: 20px;
+        align-items: start;
+    }
+
+    /* Left Side Content */
+    .main-content { width: 100%; }
+
     .result{background:var(--card);padding:14px;border-radius:10px;margin-bottom:12px;display:flex;gap:12px;align-items:flex-start}
     .result-body{flex:1}
     .result h3{margin:0 0 8px;font-size:1.08rem;color:var(--accent)}
     .result p{margin:0 0 8px;color:#d0d0d0;line-height:1.45}
     .metadata{font-size:0.85rem;color:var(--muted)}
-    .thumbnail img{width:220px;height:140px;object-fit:cover;border-radius:6px}
+    .thumbnail img{width:140px;height:98px;object-fit:cover;border-radius:6px}
 
-    /* images grid */
+    /* Right Sidebar */
+    .sidebar {
+        background: var(--sidebar-bg);
+        border-radius: 12px;
+        padding: 15px;
+        border: 1px solid #2a2a2a;
+        display: none; /* Hidden by default until data loads */
+    }
+    .sidebar h2 {
+        font-size: 1.1rem;
+        color: #ddd;
+        margin-top: 0;
+        margin-bottom: 15px;
+        border-bottom: 1px solid #333;
+        padding-bottom: 10px;
+    }
+    .comm-card {
+        display: flex;
+        gap: 10px;
+        align-items: center;
+        padding: 10px 0;
+        border-bottom: 1px solid #222;
+    }
+    .comm-card:last-child { border-bottom: none; }
+    .comm-icon {
+        width: 40px; height: 40px;
+        border-radius: 50%;
+        background: #333;
+        object-fit: cover;
+    }
+    .comm-info { flex: 1; overflow: hidden; }
+    .comm-name {
+        font-size: 0.95rem; font-weight: 700; color: #fff;
+        display: block; text-decoration: none;
+        white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+    }
+    .comm-subs { font-size: 0.8rem; color: var(--muted); }
+    .join-btn {
+        background: transparent; border: 1px solid var(--accent);
+        color: var(--accent); border-radius: 20px; padding: 4px 10px;
+        font-size: 0.75rem; font-weight: bold; text-decoration: none;
+    }
+    .join-btn:hover { background: var(--accent); color: #fff; }
+
+    /* Images grid */
     #images-container{display:none;margin-top:8px}
-    .images-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:12px}
+    .images-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:12px}
     .image-card{background:#0f0f0f;border-radius:10px;overflow:hidden;height:160px;position:relative;display:flex;align-items:center;justify-content:center;cursor:pointer}
     .image-card img{width:100%;height:100%;object-fit:cover}
-    .image-caption{position:absolute;bottom:6px;left:6px;right:6px;color:#fff;font-size:0.85rem;background:linear-gradient(0deg, rgba(0,0,0,0.6), transparent);padding:6px;border-radius:6px;display:flex;gap:8px;align-items:center}
+    .image-caption{position:absolute;bottom:0;left:0;right:0;color:#fff;font-size:0.85rem;background:rgba(0,0,0,0.7);padding:6px;}
 
     .pagination{display:flex;gap:8px;align-items:center;justify-content:center;margin-top:16px}
     .page-btn{padding:8px 12px;border-radius:8px;border:1px solid #222;background:#222;color:#ccc;cursor:pointer}
     .page-btn[disabled]{opacity:0.45;cursor:not-allowed}
-    .page-info{color:var(--muted);font-size:0.95rem}
-
     .loader{display:flex;align-items:center;justify-content:center;gap:8px;color:var(--muted); padding: 20px;}
     .no-results{padding:18px;background:#161616;border-radius:8px;color:#ccc;margin-top:12px;text-align:center}
 
-    /* modal */
-    .modal{position:fixed;inset:0;display:none;align-items:center;justify-content:center;background:rgba(0,0,0,0.75);z-index:9999}
+    /* Modal */
+    .modal{position:fixed;inset:0;display:none;align-items:center;justify-content:center;background:rgba(0,0,0,0.85);z-index:9999}
     .modal.active{display:flex}
-    .modal img{max-width:92%;max-height:86%;border-radius:8px}
-    .close-btn{position:absolute;top:18px;right:22px;background:rgba(0,0,0,0.45);color:#fff;border:1px solid rgba(255,255,255,0.08);padding:8px 10px;border-radius:6px;cursor:pointer}
+    .modal img{max-width:90%;max-height:85%;border-radius:8px}
+    .close-btn{position:absolute;top:20px;right:25px;background:#333;color:#fff;border:none;padding:10px 15px;border-radius:6px;cursor:pointer;font-size:1rem}
 
-    @media(max-width:680px){ .thumbnail img{width:140px;height:98px} .result{flex-direction:column} }
+    /* Mobile */
+    @media(max-width: 800px){
+        .layout-grid { grid-template-columns: 1fr; }
+        .sidebar { order: 2; /* Put sidebar below results on mobile */ margin-top: 20px; }
+        .thumbnail img{width:100px;height:70px}
+        .result{flex-direction:column}
+        .thumbnail img{width:100%;height:150px;}
+    }
   </style>
 </head>
 <body>
@@ -93,99 +145,86 @@
     <h1>Search Results for: <span id="query-text"></span></h1>
 
     <div class="top-row">
-      <a href="index.html" class="home-btn" title="Go Home">
-        <i class="fas fa-home"></i>
-      </a>
-
+      <a href="index.html" class="home-btn" title="Go Home"><i class="fas fa-home"></i></a>
       <div id="search-container">
         <input id="query" type="text" placeholder="Search Reddit..." onkeydown="if(event.key==='Enter') goSearch()" />
         <button id="search-btn" class="btn" onclick="goSearch()">Search</button>
       </div>
-
-      <div class="tabs" role="tablist" aria-label="Results tabs">
+      <div class="tabs">
         <div class="tab active" id="tab-all" onclick="switchTab('all')">All</div>
         <div class="tab" id="tab-images" onclick="switchTab('images')">Images</div>
       </div>
     </div>
 
-    <div class="content">
-      <div id="loader" class="loader" style="display:none">Loading data...</div>
+    <div class="layout-grid">
+        
+        <div class="main-content">
+            <div id="loader" class="loader" style="display:none">Loading data...</div>
+            
+            <div id="results-section">
+                <div id="results-container" class="results-list"></div>
+                <div id="no-results" class="no-results" style="display:none">No relevant posts found.</div>
+            </div>
 
-      <div id="results-section">
-        <div id="results-container" class="results-list"></div>
-        <div id="no-results" class="no-results" style="display:none">No relevant posts found on Reddit.</div>
-      </div>
+            <div id="images-container">
+                <div id="images-grid" class="images-grid"></div>
+            </div>
 
-      <div id="images-container">
-        <div id="images-grid" class="images-grid"></div>
-      </div>
-
-      <div class="pagination" id="pagination" style="display:none">
-        <button id="prev-btn" class="page-btn" onclick="prevPage()">Previous</button>
-        <div class="page-info">
-          Page <strong id="page-num">1</strong>
+            <div class="pagination" id="pagination" style="display:none">
+                <button id="prev-btn" class="page-btn" onclick="prevPage()">Previous</button>
+                <div class="page-info">Page <strong id="page-num">1</strong></div>
+                <button id="next-btn" class="page-btn" onclick="nextPage()">Next</button>
+            </div>
         </div>
-        <button id="next-btn" class="page-btn" onclick="nextPage()">Next</button>
-      </div>
+
+        <div class="sidebar" id="sidebar">
+            <h2>Communities</h2>
+            <div id="communities-list">
+                </div>
+        </div>
     </div>
 
-    <div style="height:28px"></div>
-
-    <div class="navigation" style="display:flex;gap:12px;color:#ccc;font-size:14px;justify-content: center;">
-      <a href="index.html" style="color:#ccc;text-decoration:none">Back to Home</a>
-      <a href="#" style="color:#ccc;text-decoration:none">Contact</a>
-    </div>
+    <div style="height:40px"></div>
   </div>
 
-  <div class="modal" id="image-modal" role="dialog" aria-modal="true" aria-hidden="true">
+  <div class="modal" id="image-modal">
     <button class="close-btn" onclick="closeModal()">Close ✕</button>
     <img id="modal-img" src="" alt="Large view">
   </div>
 
   <script>
-    /* ---------- Config ---------- */
     const BACKEND_BASE = 'http://127.0.0.1:5000'; 
-    
-    /* ---------- State ---------- */
     const urlParams = new URLSearchParams(window.location.search);
     let currentQuery = urlParams.get('query') || '';
-    
-    // Pagination State
-    let pageTokens = ['']; // Index 0 is Page 1 (which has no 'after' token)
-    let pageIndex = 0; // 0-based index
+    let pageTokens = ['']; 
+    let pageIndex = 0;
 
-    // UI elements
     const qText = document.getElementById('query-text');
     const qInput = document.getElementById('query');
     const resultsContainer = document.getElementById('results-container');
     const imagesGrid = document.getElementById('images-grid');
-    const imagesContainer = document.getElementById('images-container');
-    const noResults = document.getElementById('no-results');
+    const sidebar = document.getElementById('sidebar');
+    const commList = document.getElementById('communities-list');
     const loader = document.getElementById('loader');
     const pagination = document.getElementById('pagination');
     const pageNumEl = document.getElementById('page-num');
     const prevBtn = document.getElementById('prev-btn');
     const nextBtn = document.getElementById('next-btn');
 
-    // initialize UI
     qText.textContent = currentQuery;
     qInput.value = currentQuery;
 
-    /* ---------- Logic ---------- */
-
     function switchTab(tab) {
-      const allTab = document.getElementById('tab-all');
-      const imgTab = document.getElementById('tab-images');
       if (tab === 'images') {
-        imgTab.classList.add('active');
-        allTab.classList.remove('active');
+        document.getElementById('tab-images').classList.add('active');
+        document.getElementById('tab-all').classList.remove('active');
         document.getElementById('results-section').style.display = 'none';
-        imagesContainer.style.display = 'block';
+        document.getElementById('images-container').style.display = 'block';
       } else {
-        allTab.classList.add('active');
-        imgTab.classList.remove('active');
+        document.getElementById('tab-all').classList.add('active');
+        document.getElementById('tab-images').classList.remove('active');
         document.getElementById('results-section').style.display = 'block';
-        imagesContainer.style.display = 'none';
+        document.getElementById('images-container').style.display = 'none';
       }
     }
 
@@ -193,24 +232,19 @@
       const q = qInput.value.trim();
       if (!q) return;
       currentQuery = q;
-      
-      // Reset State
       pageTokens = [''];
       pageIndex = 0;
-      
       qText.textContent = currentQuery;
-      // Update URL without reloading
       const u = new URL(window.location.href);
       u.searchParams.set('query', currentQuery);
       window.history.replaceState({}, '', u.toString());
-      
-      loadData();
+      loadData(true); // pass true to refresh sidebar
     }
 
     function nextPage() {
         if (pageIndex < pageTokens.length - 1) {
             pageIndex++;
-            loadData();
+            loadData(false); // don't refresh sidebar on paging
             window.scrollTo({ top: 0, behavior: 'smooth' });
         }
     }
@@ -218,28 +252,21 @@
     function prevPage() {
         if (pageIndex > 0) {
             pageIndex--;
-            loadData();
+            loadData(false);
             window.scrollTo({ top: 0, behavior: 'smooth' });
         }
     }
 
-    /* ---------- Fetch & Render ---------- */
-    async function loadData() {
+    async function loadData(refreshSidebar = false) {
       if (!currentQuery) return;
-      
       setLoading(true);
-      
-      // Get the token for the current page
       const afterToken = pageTokens[pageIndex] || '';
 
       try {
         const resp = await fetch(`${BACKEND_BASE}/get-answer?query=${encodeURIComponent(currentQuery)}&after=${afterToken}`);
         if (!resp.ok) throw new Error('Network error');
-        
         const data = await resp.json();
-        
-        // Handle "Next" token logic
-        // If we are on the last known page, and server gives a new token, add it to stack
+
         if (data.after && pageIndex === pageTokens.length - 1) {
             pageTokens.push(data.after);
         }
@@ -247,162 +274,116 @@
         renderPage(data.results);
         updatePaginationUI(data.after);
 
+        // Only render communities if it's the first page or a fresh search
+        if (refreshSidebar || pageIndex === 0) {
+            renderCommunities(data.communities);
+        }
+
       } catch (err) {
-        console.error('Error loading data:', err);
-        resultsContainer.innerHTML = '';
-        noResults.style.display = 'block';
-        noResults.textContent = 'Error loading results.';
+        console.error(err);
       } finally {
         setLoading(false);
       }
     }
 
+    function renderCommunities(communities) {
+        commList.innerHTML = '';
+        if (!communities || communities.length === 0) {
+            sidebar.style.display = 'none';
+            return;
+        }
+        sidebar.style.display = 'block';
+        
+        communities.forEach(c => {
+            const div = document.createElement('div');
+            div.className = 'comm-card';
+            
+            // Default icon if missing
+            const iconSrc = c.icon || 'https://www.redditstatic.com/avatars/avatar_default_02_FF4500.png';
+            
+            div.innerHTML = `
+                <img src="${iconSrc}" class="comm-icon" onerror="this.src='https://www.redditstatic.com/avatars/avatar_default_02_FF4500.png'">
+                <div class="comm-info">
+                    <a href="${c.url}" target="_blank" class="comm-name">${c.name}</a>
+                    <div class="comm-subs">${formatNumber(c.subscribers)} members</div>
+                </div>
+                <a href="${c.url}" target="_blank" class="join-btn">Visit</a>
+            `;
+            commList.appendChild(div);
+        });
+    }
+
+    function formatNumber(num) {
+        if (num >= 1000000) return (num / 1000000).toFixed(1) + 'M';
+        if (num >= 1000) return (num / 1000).toFixed(1) + 'k';
+        return num;
+    }
+
     function updatePaginationUI(serverNextToken) {
         pageNumEl.textContent = pageIndex + 1;
-        
-        // Enable Prev if index > 0
         prevBtn.disabled = (pageIndex === 0);
-        
-        // Enable Next if we have a token for the next page OR the server just gave us one
         const hasNext = (pageIndex < pageTokens.length - 1) || (!!serverNextToken);
         nextBtn.disabled = !hasNext;
-        
         pagination.style.display = 'flex';
     }
 
     function renderPage(results) {
       resultsContainer.innerHTML = '';
       imagesGrid.innerHTML = '';
-      noResults.style.display = 'none';
+      const noRes = document.getElementById('no-results');
+      noRes.style.display = 'none';
 
       if (!results || !results.length) {
-        noResults.style.display = 'block';
-        imagesGrid.innerHTML = `<div style="color:#ccc;padding:18px;">No images found.</div>`;
+        noRes.style.display = 'block';
+        imagesGrid.innerHTML = `<div style="color:#ccc;">No images found.</div>`;
         return;
       }
 
       results.forEach(r => {
-        // --- Text Card ---
+        // Text Card
         const card = document.createElement('div');
         card.className = 'result';
-
-        if (r.image_url) {
-          const thumbWrap = document.createElement('div');
-          thumbWrap.className = 'thumbnail';
-          const img = document.createElement('img');
-          img.src = sanitizeImageUrl(r.image_url);
-          img.onerror = () => { img.style.display = 'none'; };
-          thumbWrap.appendChild(img);
-          card.appendChild(thumbWrap);
-        }
-
-        const body = document.createElement('div');
-        body.className = 'result-body';
-
-        const h3 = document.createElement('h3');
-        const a = document.createElement('a');
-        a.href = r.url || '#';
-        a.target = '_blank';
-        a.textContent = r.title || 'Untitled';
-        a.style.color = 'inherit';
-        h3.appendChild(a);
-
-        const p = document.createElement('p');
-        p.textContent = r.description || '';
-
-        const meta = document.createElement('div');
-        meta.className = 'metadata';
-        meta.textContent = `By ${r.author || 'unknown'} • ${r.created_at || ''}`;
         
-        // "See More" / Full Text Toggle
-        if (r.full_description && r.full_description.length > r.description.length) {
-             const toggleBtn = document.createElement('span');
-             toggleBtn.textContent = " [Show More]";
-             toggleBtn.style.color = "var(--accent)";
-             toggleBtn.style.cursor = "pointer";
-             toggleBtn.style.fontSize = "0.9rem";
-             toggleBtn.onclick = function() {
-                 if(p.textContent === r.description) {
-                     p.textContent = r.full_description;
-                     toggleBtn.textContent = " [Show Less]";
-                 } else {
-                     p.textContent = r.description;
-                     toggleBtn.textContent = " [Show More]";
-                 }
-             };
-             meta.appendChild(toggleBtn);
+        if(r.image_url) {
+            const t = document.createElement('div'); t.className='thumbnail';
+            const i = document.createElement('img'); i.src = sanitize(r.image_url);
+            t.appendChild(i); card.appendChild(t);
         }
 
-        body.appendChild(h3);
-        body.appendChild(p);
-        body.appendChild(meta);
+        const body = document.createElement('div'); body.className='result-body';
+        body.innerHTML = `
+            <h3><a href="${r.url}" target="_blank" style="color:inherit">${escapeHtml(r.title)}</a></h3>
+            <p>${escapeHtml(r.description)}</p>
+            <div class="metadata">By ${escapeHtml(r.author)} • ${r.created_at}</div>
+        `;
         card.appendChild(body);
         resultsContainer.appendChild(card);
 
-        // --- Image Grid Item ---
+        // Image Grid
         if (r.image_url) {
-          const imgCard = document.createElement('div');
-          imgCard.className = 'image-card';
-          imgCard.onclick = () => openModal(r.image_url, r.title);
-          
-          const gImg = document.createElement('img');
-          gImg.src = sanitizeImageUrl(r.image_url);
-          imgCard.appendChild(gImg);
-          
-          const cap = document.createElement('div');
-          cap.className = 'image-caption';
-          cap.innerHTML = `<strong>${escapeHtml(r.title)}</strong>`;
-          imgCard.appendChild(cap);
-          
-          imagesGrid.appendChild(imgCard);
+            const iCard = document.createElement('div'); iCard.className='image-card';
+            iCard.onclick = () => openModal(r.image_url);
+            iCard.innerHTML = `
+                <img src="${sanitize(r.image_url)}">
+                <div class="image-caption">${escapeHtml(r.title)}</div>
+            `;
+            imagesGrid.appendChild(iCard);
         }
       });
-      
-      // If no images
-      if (!imagesGrid.children.length) {
-         imagesGrid.innerHTML = `<div style="color:#ccc;padding:18px;">No images in this batch.</div>`;
-      }
     }
 
-    /* ---------- Utils ---------- */
-    function sanitizeImageUrl(url) {
-      if (!url) return '';
-      let u = String(url).trim().replace(/&amp;/g, '&');
-      if (u.startsWith('//')) u = 'https:' + u;
-      return u;
-    }
+    function sanitize(url) { return url ? url.replace(/&amp;/g, '&') : ''; }
+    function escapeHtml(str) { return str ? str.replace(/&/g,'&amp;').replace(/</g,'&lt;') : ''; }
+    function setLoading(s) { loader.style.display = s ? 'flex' : 'none'; }
     
-    function escapeHtml(str) {
-      if (!str) return '';
-      return String(str).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
-    }
+    // Modal
+    const modal = document.getElementById('image-modal');
+    const mImg = document.getElementById('modal-img');
+    window.openModal = (src) => { mImg.src = sanitize(src); modal.classList.add('active'); }
+    window.closeModal = () => { modal.classList.remove('active'); mImg.src=''; }
+    modal.onclick = (e) => { if(e.target === modal) closeModal(); }
 
-    function setLoading(state) {
-      loader.style.display = state ? 'flex' : 'none';
-    }
-
-    /* ---------- Modal ---------- */
-    function openModal(src, alt) {
-      const modal = document.getElementById('image-modal');
-      const img = document.getElementById('modal-img');
-      img.src = sanitizeImageUrl(src);
-      modal.classList.add('active');
-    }
-    function closeModal() {
-      document.getElementById('image-modal').classList.remove('active');
-    }
-    document.getElementById('image-modal').addEventListener('click', (e) => {
-      if (e.target.id === 'image-modal') closeModal();
-    });
-
-    /* ---------- Init ---------- */
-    (function init(){
-      if (currentQuery) loadData();
-      else {
-          document.getElementById('results-container').innerHTML = ''; 
-          pagination.style.display = 'none';
-      }
-    })();
+    (function init(){ if (currentQuery) loadData(true); })();
   </script>
 </body>
 </html>
