@@ -7,12 +7,13 @@
   <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
   <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
   <style>
-    /* ... (Keep your existing styles exactly as they were) ... */
     :root{ --accent:#ff4500; --yt-accent:#ff0000; --bg:#111; --card:#1a1a1a; --text:#fff; --sidebar-bg:#151515; }
     body{ font-family:'Roboto',sans-serif; background:var(--bg); color:var(--text); margin:0; padding:20px; min-height:100vh; display:flex; flex-direction:column; align-items:center; }
     .container{width:100%;max-width:1100px}
     
-    .top-row{display:flex;gap:10px;align-items:center;margin-bottom:20px}
+    /* MODIFIED TOP ROW FOR WRAPPING */
+    .top-row{display:flex; gap:10px; align-items:center; margin-bottom:20px; flex-wrap: wrap;}
+    
     .home-btn{background:#222;color:#fff;border:1px solid #333;width:40px;height:40px;border-radius:50%;display:flex;align-items:center;justify-content:center;text-decoration:none;font-size:1.1rem;}
     .home-btn:hover{background:var(--accent);border-color:var(--accent);}
     #search-container{display:flex;gap:10px;flex:1;}
@@ -23,6 +24,18 @@
     .tab{padding:8px 15px;border-radius:18px;background:#222;color:#ccc;cursor:pointer;}
     .tab.active{background:rgba(255,69,0,0.2);color:var(--accent);border:1px solid rgba(255,69,0,0.3);}
     #tab-videos.active{background:rgba(255,0,0,0.2);color:var(--yt-accent);border-color:var(--yt-accent);}
+
+    /* MOBILE SPECIFIC UPDATES */
+    @media(max-width:600px){
+        .top-row { gap: 15px 10px; }
+        #nav-tabs { 
+            width: 100%; 
+            padding-top: 15px; 
+            border-top: 1px solid #333; /* The thin line */
+            justify-content: flex-start;
+            overflow-x: auto;
+        }
+    }
 
     .layout-grid { display: grid; grid-template-columns: 1fr 300px; gap: 20px; align-items: start; }
     .main-content { width: 100%; }
@@ -37,10 +50,7 @@
     .see-more-btn { color: var(--accent); cursor: pointer; font-size: 0.85rem; font-weight: 600; margin-left: 5px; }
     .see-more-btn:hover { text-decoration: underline; }
 
-    /* Trending Styles */
     #trending-section { text-align: center; padding: 40px 20px; transition: 0.3s; }
-    
-    /* Compact Mode: Show at top with results below */
     #trending-section.compact-mode { padding: 10px 0 20px 0; text-align: left; border-bottom: 1px solid #333; margin-bottom: 20px; }
     #trending-section.compact-mode .trending-title { font-size: 1.1rem; margin-bottom: 10px; display: inline-block; margin-right: 15px; }
     #trending-section.compact-mode .trending-tags { display: inline-flex; justify-content: flex-start; overflow-x: auto; max-width: 100%; white-space: nowrap; padding-bottom: 5px; vertical-align: middle; }
@@ -115,27 +125,22 @@
     <div id="results-wrapper" class="layout-grid" style="display:none">
       <div class="main-content">
         <div id="loader" style="display:none; text-align:center; padding:20px; color:#888;">Loading...</div>
-
         <div id="results-section">
           <div id="results-list"></div>
         </div>
-
         <div id="images-container">
           <div id="images-grid" class="media-grid"></div>
         </div>
-
         <div id="videos-container">
           <div id="videos-grid" class="media-grid"></div>
           <div id="video-loader" style="display:none; text-align:center; padding:20px;">Searching YouTube...</div>
         </div>
-
         <div class="pagination" id="pagination" style="display:none">
           <button class="page-btn" id="prev-btn" onclick="prevPage()">Prev</button>
           <span style="display:flex;align-items:center; color:#888;" id="page-num">Page 1</span>
           <button class="page-btn" id="next-btn" onclick="nextPage()">Next</button>
         </div>
       </div>
-
       <div class="sidebar" id="sidebar">
         <h3 id="sidebar-title" class="sidebar-header">Communities</h3>
         <div id="sidebar-list"></div>
@@ -152,13 +157,12 @@
   </div>
 
   <script>
+    /* ... (KEEP ALL YOUR EXISTING JAVASCRIPT EXACTLY AS IT IS) ... */
     const BACKEND = 'http://127.0.0.1:5000';
     const params = new URLSearchParams(window.location.search);
     let currentQuery = params.get('query') || '';
     let initialTab = params.get('tab') || 'all';
-    // Mode Check: Did we come from "Trending" button?
     let isTrendingMode = (params.get('mode') === 'trending');
-
     let redditTokens = [''];
     let redditIndex = 0;
     let videoPage = 1;
@@ -166,242 +170,150 @@
     let redditCommunities = [];
     let youtubeChannels = [];
     let trendingLoaded = false;
-
     document.getElementById('query').value = currentQuery;
-
-    // --- Core Logic ---
-
-    // 1. Initial Load
     function init() {
-        if(isTrendingMode) {
-            // SCENARIO: Trending Mode
-            // Show trending section, load topics, then auto-search the first one.
-            loadTrending(true); 
-        } else if (currentQuery) {
-            // SCENARIO: Normal Search (URL has query)
-            // Hide trending, just show results.
+        if(isTrendingMode) { loadTrending(true); } 
+        else if (currentQuery) {
             document.getElementById('trending-section').style.display = 'none';
             if(initialTab !== 'all') switchTab(initialTab);
             goSearch();
-        } else {
-            // SCENARIO: Empty Page / Images / Videos Tab click
-            // Load trending list but don't auto-search unless on a tab
-            loadTrending(false);
-        }
+        } else { loadTrending(false); }
     }
-
-    // 2. Trigger Search (From Input or Button)
     function triggerSearch() {
-        // If user manually searches, we EXIT trending mode
         isTrendingMode = false;
-        // Clean URL to remove ?mode=trending
         const u = new URL(window.location.href);
         u.searchParams.delete('mode');
         window.history.replaceState({},'',u);
-        
         goSearch();
     }
-
-    // 3. Go Search (The Engine)
     function goSearch(overrideQuery) {
         const val = overrideQuery || document.getElementById('query').value.trim();
         if(!val) return;
-        
         currentQuery = val;
         document.getElementById('query').value = val;
-        
-        // --- UI STATE MANAGEMENT ---
         if (isTrendingMode) {
-            // Trending Mode: Show Tags + Results
             document.getElementById('trending-section').style.display = 'block';
             document.getElementById('trending-section').classList.add('compact-mode');
             highlightActiveTag(currentQuery);
         } else {
-            // Normal Mode: Hide Tags
             document.getElementById('trending-section').style.display = 'none';
         }
-
         document.getElementById('results-wrapper').style.display = 'grid';
         document.getElementById('nav-tabs').style.display = 'flex';
-        
-        // Reset Pagination
         redditTokens = [''];
         redditIndex = 0;
         videoPage = 1;
-        
-        // Update URL
         const u = new URL(window.location.href);
         u.searchParams.set('query', currentQuery);
         if(initialTab !== 'all') u.searchParams.set('tab', initialTab);
         if(isTrendingMode) u.searchParams.set('mode', 'trending');
         window.history.replaceState({},'',u);
-        
-        // Clear Content
         document.getElementById('results-list').innerHTML = '';
         document.getElementById('images-grid').innerHTML = '';
         document.getElementById('videos-grid').innerHTML = '';
-        
         loadReddit(true);
         loadVideos(true);
     }
-
     function highlightActiveTag(query) {
         const tags = document.querySelectorAll('.trend-tag');
         tags.forEach(t => {
-            if (t.innerText.toLowerCase() === query.toLowerCase()) {
-                t.classList.add('active-tag');
-            } else {
-                t.classList.remove('active-tag');
-            }
+            if (t.innerText.toLowerCase() === query.toLowerCase()) t.classList.add('active-tag');
+            else t.classList.remove('active-tag');
         });
     }
-
     async function loadTrending(autoSearch) {
         document.getElementById('trending-section').style.display = 'block';
         if (!autoSearch && !currentQuery) {
              document.getElementById('trending-section').classList.remove('compact-mode');
              document.getElementById('results-wrapper').style.display = 'none';
         }
-
         if(trendingLoaded) {
-            // If already loaded, just maybe trigger search
             if(autoSearch) {
-                 // Try to grab first tag text
                  const firstTag = document.querySelector('.trend-tag');
                  if(firstTag) goSearch(firstTag.innerText);
             }
             return;
         }
-
         const loader = document.getElementById('trending-loader');
         const container = document.getElementById('trending-tags');
         loader.style.display = 'block';
-        
         try {
             const res = await fetch(`${BACKEND}/get-trending`);
             const topics = await res.json();
             container.innerHTML = '';
-            
             topics.forEach((topic, idx) => {
                 const tag = document.createElement('div');
                 tag.className = 'trend-tag';
                 tag.innerText = topic;
                 tag.onclick = () => {
-                    // Clicking a tag KEEPS/ENTERS trending mode
                     isTrendingMode = true;
-                    // Reset tab to All
                     if(initialTab !== 'all') { initialTab = 'all'; switchTab('all'); }
                     goSearch(topic);
                 };
                 container.appendChild(tag);
-                
-                // If autoSearch is ON, pick the first one immediately
-                if(autoSearch && idx === 0) {
-                    goSearch(topic);
-                }
+                if(autoSearch && idx === 0) goSearch(topic);
             });
             trendingLoaded = true;
-            
-            // Special Case: Images/Videos tab from home
             if((initialTab === 'images' || initialTab === 'videos') && !currentQuery && topics.length > 0) {
                  goSearch(topics[0]);
                  switchTab(initialTab);
             }
-
         } catch(e) { console.error(e); }
         finally { loader.style.display = 'none'; }
     }
-
     function switchTab(name) {
       document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
       document.getElementById('tab-'+name).classList.add('active');
       document.getElementById('results-section').style.display = 'none';
       document.getElementById('images-container').style.display = 'none';
       document.getElementById('videos-container').style.display = 'none';
-
       isVideoTab = (name === 'videos');
-
       if(name === 'all') document.getElementById('results-section').style.display = 'block';
       if(name === 'images') document.getElementById('images-container').style.display = 'block';
       if(name === 'videos') document.getElementById('videos-container').style.display = 'block';
-      
       updatePaginationUI();
       updateSidebar();
     }
-
-    // --- Fetch Logic (Same as before) ---
-
     async function loadReddit(refreshSidebar) {
       document.getElementById('loader').style.display = 'block';
       const token = redditTokens[redditIndex] || '';
       try {
         const res = await fetch(`${BACKEND}/get-answer?query=${encodeURIComponent(currentQuery)}&after=${token}`);
         const data = await res.json();
-        
         if(data.after && redditIndex === redditTokens.length-1) redditTokens.push(data.after);
-        
         renderReddit(data.results);
         if(data.communities && data.communities.length > 0) redditCommunities = data.communities;
         if(refreshSidebar) updateSidebar();
         if(!isVideoTab) updatePaginationUI();
-
       } catch(e) { console.error(e); }
       finally { document.getElementById('loader').style.display = 'none'; }
     }
-
     function renderReddit(results) {
       const list = document.getElementById('results-list');
       const imgGrid = document.getElementById('images-grid');
-      
-      // For this implementation we clear on page flip to keep things simple
-      list.innerHTML = ''; 
-      imgGrid.innerHTML = '';
-
-      if(!results.length) {
-          list.innerHTML = '<div style="color:#666">No results found.</div>';
-          return;
-      }
-
+      list.innerHTML = ''; imgGrid.innerHTML = '';
+      if(!results.length) { list.innerHTML = '<div style="color:#666">No results found.</div>'; return; }
       results.forEach(r => {
         const div = document.createElement('div');
         div.className = 'result';
-        
         let thumbHtml = r.image_url ? `<div class="thumbnail"><img src="${r.image_url}" onerror="this.style.display='none'"></div>` : '';
         const fullText = (r.full_description || r.description || "").trim();
         const shortText = (r.description || "").trim();
         const hasMore = fullText.length > shortText.length + 20;
-
-        div.innerHTML = `
-            ${thumbHtml}
-            <div style="flex:1; min-width: 0;">
-              <h3><a href="${r.url}" target="_blank">${safe(r.title)}</a></h3>
-              <div class="desc-container">
-                <span class="short-desc">${safe(shortText)}</span>
-                <span class="full-desc">${safe(fullText).replace(/\n/g, '<br>')}</span>
-                ${hasMore ? '<span class="see-more-btn">See More</span>' : ''}
-              </div>
-              <div style="font-size:0.8rem;color:#666;margin-top:8px;">${r.author} • ${r.created_at}</div>
-            </div>`;
-        
+        div.innerHTML = `${thumbHtml}<div style="flex:1; min-width: 0;"><h3><a href="${r.url}" target="_blank">${safe(r.title)}</a></h3><div class="desc-container"><span class="short-desc">${safe(shortText)}</span><span class="full-desc">${safe(fullText).replace(/\n/g, '<br>')}</span>${hasMore ? '<span class="see-more-btn">See More</span>' : ''}</div><div style="font-size:0.8rem;color:#666;margin-top:8px;">${r.author} • ${r.created_at}</div></div>`;
         if(hasMore) {
             const btn = div.querySelector('.see-more-btn');
             const shortSpan = div.querySelector('.short-desc');
             const fullSpan = div.querySelector('.full-desc');
             btn.onclick = function() {
                 if (fullSpan.style.display === 'block') {
-                    fullSpan.style.display = 'none';
-                    shortSpan.style.display = 'inline';
-                    btn.innerText = 'See More';
+                    fullSpan.style.display = 'none'; shortSpan.style.display = 'inline'; btn.innerText = 'See More';
                 } else {
-                    fullSpan.style.display = 'block';
-                    shortSpan.style.display = 'none';
-                    btn.innerText = 'See Less';
+                    fullSpan.style.display = 'block'; shortSpan.style.display = 'none'; btn.innerText = 'See Less';
                 }
             };
         }
-
         list.appendChild(div);
-
         if(r.image_url) {
           const card = document.createElement('div');
           card.className = 'media-card';
@@ -411,23 +323,18 @@
         }
       });
     }
-
     async function loadVideos(reset) {
       const loader = document.getElementById('video-loader');
       const grid = document.getElementById('videos-grid');
       if(reset) grid.innerHTML = '';
       loader.style.display = 'block';
-      
       try {
         const res = await fetch(`${BACKEND}/get-videos?query=${encodeURIComponent(currentQuery)}&page=${videoPage}`);
         const data = await res.json();
         const videos = data.videos || [];
-        
         if(data.channels && data.channels.length > 0) youtubeChannels = data.channels;
-        
         grid.innerHTML = '';
         if(!videos.length) grid.innerHTML = '<div style="color:#666">No videos found.</div>';
-
         videos.forEach(v => {
           const card = document.createElement('div');
           card.className = 'media-card';
@@ -435,108 +342,63 @@
           card.innerHTML = `<img src="${v.thumbnail}"><div class="play-icon"><i class="fas fa-play-circle"></i></div><div class="media-caption">${safe(v.title)}</div>`;
           grid.appendChild(card);
         });
-        
         if(isVideoTab) { updatePaginationUI(); updateSidebar(); }
       } catch(e) { console.error(e); }
       finally { loader.style.display = 'none'; }
     }
-
     function updateSidebar() {
         const title = document.getElementById('sidebar-title');
         const list = document.getElementById('sidebar-list');
         list.innerHTML = '';
         let items = isVideoTab ? youtubeChannels : redditCommunities;
         title.textContent = isVideoTab ? "Top Channels" : "Communities";
-        
         if(!items || !items.length) { list.innerHTML = '<div style="color:#666; font-size:0.9rem;">No suggestions.</div>'; return; }
-        
         items.forEach(c => {
             const row = document.createElement('div'); row.className='comm-card';
             const defaultIcon = isVideoTab ? 'https://www.gstatic.com/youtube/img/branding/favicon/favicon_144x144.png' : 'https://www.redditstatic.com/avatars/avatar_default_02_FF4500.png';
-            row.innerHTML = `
-                <img src="${c.icon || defaultIcon}" class="comm-icon" onerror="this.src='${defaultIcon}'">
-                <div style="flex:1;overflow:hidden;"><div style="font-weight:bold;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${c.name}</div><div style="font-size:0.8rem;color:#888">${isVideoTab ? '' : (c.subscribers ? fmtNum(c.subscribers) + ' subs' : '')}</div></div>
-                <a href="${c.url}" target="_blank" class="${isVideoTab ? 'join-btn yt-sub-btn' : 'join-btn'}">${isVideoTab ? 'Visit' : 'Join'}</a>
-            `;
+            row.innerHTML = `<img src="${c.icon || defaultIcon}" class="comm-icon" onerror="this.src='${defaultIcon}'"><div style="flex:1;overflow:hidden;"><div style="font-weight:bold;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${c.name}</div><div style="font-size:0.8rem;color:#888">${isVideoTab ? '' : (c.subscribers ? fmtNum(c.subscribers) + ' subs' : '')}</div></div><a href="${c.url}" target="_blank" class="${isVideoTab ? 'join-btn yt-sub-btn' : 'join-btn'}">${isVideoTab ? 'Visit' : 'Join'}</a>`;
             list.appendChild(row);
         });
     }
-
     function openModal(type, content, externalUrl) {
       const body = document.getElementById('modal-body');
-      const footer = document.getElementById('modal-footer');
       const modal = document.getElementById('media-modal');
-      footer.innerHTML = ''; 
-      
+      document.getElementById('modal-footer').innerHTML = ''; 
       if(type === 'image') body.innerHTML = `<img src="${content}">`;
       else if (type === 'video') {
         body.innerHTML = `<iframe src="https://www.youtube.com/embed/${content}?autoplay=1" allow="autoplay; encrypted-media" allowfullscreen></iframe>`;
         if (externalUrl) {
             const btn = document.createElement('a');
-            btn.className = 'fallback-btn';
-            btn.href = externalUrl;
-            btn.target = '_blank';
+            btn.className = 'fallback-btn'; btn.href = externalUrl; btn.target = '_blank';
             btn.innerHTML = '<i class="fab fa-youtube"></i> Watch on YouTube';
-            footer.appendChild(btn);
+            document.getElementById('modal-footer').appendChild(btn);
         }
       }
       modal.classList.add('active');
     }
-
     function closeModal() { document.getElementById('media-modal').classList.remove('active'); document.getElementById('modal-body').innerHTML = ''; }
     document.getElementById('media-modal').onclick = (e) => { if(e.target.id === 'media-modal') closeModal(); }
-
     function updatePaginationUI() {
         const div = document.getElementById('pagination');
         const num = document.getElementById('page-num');
         const prev = document.getElementById('prev-btn');
         div.style.display = 'flex';
-        
-        if (isVideoTab) {
-            num.innerText = "Page " + videoPage;
-            prev.disabled = (videoPage === 1);
-        } else {
-            num.innerText = "Page " + (redditIndex + 1);
-            prev.disabled = (redditIndex === 0);
-        }
+        if (isVideoTab) { num.innerText = "Page " + videoPage; prev.disabled = (videoPage === 1); } 
+        else { num.innerText = "Page " + (redditIndex + 1); prev.disabled = (redditIndex === 0); }
     }
-
     function nextPage() {
-        if (isVideoTab) {
-            videoPage++;
-            loadVideos(false);
-            window.scrollTo({ top: 0, behavior: 'smooth' });
-        } else {
-            if(redditIndex < redditTokens.length - 1) {
-                redditIndex++;
-                loadReddit(false);
-                window.scrollTo({ top: 0, behavior: 'smooth' });
-            }
-        }
+        if (isVideoTab) { videoPage++; loadVideos(false); } 
+        else if(redditIndex < redditTokens.length - 1) { redditIndex++; loadReddit(false); }
+        window.scrollTo({ top: 0, behavior: 'smooth' });
     }
-
     function prevPage() {
-        if (isVideoTab) {
-            if (videoPage > 1) {
-                videoPage--;
-                loadVideos(false);
-                window.scrollTo({ top: 0, behavior: 'smooth' });
-            }
-        } else {
-            if(redditIndex > 0) {
-                redditIndex--;
-                loadReddit(false);
-                window.scrollTo({ top: 0, behavior: 'smooth' });
-            }
-        }
+        if (isVideoTab && videoPage > 1) { videoPage--; loadVideos(false); } 
+        else if(!isVideoTab && redditIndex > 0) { redditIndex--; loadReddit(false); }
+        window.scrollTo({ top: 0, behavior: 'smooth' });
     }
-
     function safe(s){ return s ? s.replace(/</g,'&lt;') : ''; }
     function fmtNum(n){ return n > 1000000 ? (n/1000000).toFixed(1)+'M' : n > 1000 ? (n/1000).toFixed(1)+'k' : n; }
-
-    // Start
     init();
-
   </script>
 </body>
 </html>
